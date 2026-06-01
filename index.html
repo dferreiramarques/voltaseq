@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MIDI Sequencer — Maschine-style Loop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+        --bg-main: #0f1419;
+        --bg-panel: #1a202c;
+        --bg-control: #252f3f;
+        --bg-lighter: #2d3748;
+        --bg-roll: #11161f;
+        --border: #334155;
+        --border-soft: #1e293b;
+        --text-primary: #f8fafc;
+        --text-secondary: #94a3b8;
+        --accent: #6366f1;
+        --accent-alt: #818cf8;
+        --accent-dark: #4f46e5;
+        --warning: #f59e0b;
+        --danger: #ef4444;
+        --success: #10b981;
+        --row-h: 14px;
+    }
+
+    html, body {
+        width: 100%; height: 100%;
+        background: var(--bg-main);
+        color: var(--text-primary);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        overflow: hidden;
+        font-size: 12px;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    }
+
+    /* Mono only for numbers / code / values */
+    input[type="number"], .pos-display, .log-time, .log-raw, .log-data, .status-val,
+    .pkey, .bar-tick, .ctrl-label { font-family: 'JetBrains Mono', 'Courier New', monospace; }
+
+    .container { display: flex; flex-direction: column; height: 100vh; }
+
+    /* ════ HEADER ════ */
+    .header {
+        background: var(--bg-panel);
+        border-bottom: 1px solid var(--border);
+        padding: 12px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        transition: background 0.2s, border-color 0.2s;
+    }
+    .header h1 {
+        font-size: 18px; letter-spacing: -0.5px;
+        color: var(--text-primary); font-weight: 700;
+    }
+    .header h1 span { color: var(--accent); }
+    .header.recording {
+        background: rgba(239, 68, 68, 0.12);
+        border-bottom-color: var(--danger);
+        animation: recpulse 1.1s infinite;
+    }
+    @keyframes recpulse {
+        0%,100% { box-shadow: inset 0 0 0 0 rgba(239,68,68,0); }
+        50% { box-shadow: inset 0 0 60px 0 rgba(239,68,68,0.18); }
+    }
+    .header-right { display: flex; align-items: center; gap: 18px; }
+    .midi-status { display: flex; align-items: center; gap: 8px; font-size: 11px; color: var(--text-secondary); }
+    .midi-status.connected { color: var(--accent); }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--danger); }
+    .status-dot.connected { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+    .midi-activity { width: 8px; height: 8px; border-radius: 50%; background: var(--border); transition: background 0.05s; }
+    .midi-activity.active { background: var(--accent-alt); box-shadow: 0 0 8px var(--accent-alt); }
+
+    /* ════ MAIN ════ */
+    .main { display: flex; flex: 1; overflow: hidden; }
+
+    /* ════ SIDEBAR ════ */
+    .sidebar {
+        width: 250px; min-width: 250px;
+        background: var(--bg-panel);
+        border-right: 1px solid var(--border);
+        overflow-y: auto; display: flex; flex-direction: column;
+    }
+    .section { padding: 12px 14px; border-bottom: 1px solid var(--border-soft); }
+    .section-title {
+        font-size: 10px; color: var(--accent); text-transform: uppercase;
+        letter-spacing: 1.5px; margin-bottom: 10px; font-weight: 700;
+    }
+    .ctrl { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+    .ctrl-label { font-size: 9px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+    .ctrl-row { display: flex; gap: 8px; }
+    .ctrl-row .ctrl { flex: 1; margin-bottom: 0; }
+
+    input[type="number"], input[type="text"], select {
+        background: var(--bg-control); border: 1px solid var(--border);
+        color: var(--text-primary); padding: 6px 8px; font-family: inherit;
+        font-size: 11px; border-radius: 3px; width: 100%;
+    }
+    input[type="range"] { width: 100%; accent-color: var(--accent); }
+    select { cursor: pointer; }
+    input:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 6px rgba(99,102,241,0.3); }
+
+    .btn-row { display: flex; gap: 6px; }
+    .transport-btns { display: flex; gap: 6px; margin-top: 8px; }
+    .transport-btns button { flex: 1; padding: 11px 6px; font-size: 12px; }
+    button {
+        flex: 1; padding: 8px 10px; background: var(--bg-control);
+        border: 1px solid var(--border); color: var(--text-primary);
+        cursor: pointer; font-size: 12px; letter-spacing: 0;
+        border-radius: 6px; transition: all 0.15s ease; font-weight: 500;
+        font-family: inherit;
+    }
+    button:hover { background: var(--bg-lighter); border-color: var(--accent); color: var(--text-primary); }
+    button:active { transform: scale(0.98); }
+    button.danger { background: var(--bg-control); border-color: var(--border); color: var(--danger); }
+    button.danger:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
+
+    #recBtn.armed { border-color: var(--danger); color: var(--danger); }
+    #recBtn.recording { background: var(--danger); color: #fff; border-color: var(--danger); }
+    #playBtn.playing { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .btn-row .danger { font-size: 12px; }
+
+    .tracks-list { display: flex; flex-direction: column; }
+    .track-item {
+        padding: 8px 10px; background: var(--bg-control); margin: 5px 0;
+        border: 1px solid var(--border); border-radius: 3px; cursor: pointer;
+        transition: all 0.15s; display: flex; align-items: center; gap: 8px;
+    }
+    .track-item:hover { border-color: var(--accent); }
+    .track-item.active { background: rgba(99,102,241,0.12); border-color: var(--accent); }
+    .track-color { width: 4px; height: 28px; border-radius: 2px; flex-shrink: 0; }
+    .track-meta { flex: 1; min-width: 0; }
+    .track-name { font-size: 11px; }
+    .track-info { font-size: 9px; color: var(--text-secondary); margin-top: 2px; }
+    .track-mute {
+        width: 22px; height: 22px; flex: none; padding: 0; font-size: 9px;
+        background: var(--bg-main); border: 1px solid var(--border);
+    }
+    .track-mute.muted { background: var(--warning); color: var(--bg-main); border-color: var(--warning); }
+
+    .toggle-row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+    .toggle-row input { width: auto; accent-color: var(--accent); }
+    .toggle-row label { font-size: 10px; color: var(--text-secondary); cursor: pointer; }
+
+    /* ════ EDITOR ════ */
+    .editor { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .toolbar {
+        background: var(--bg-panel); border-bottom: 1px solid var(--border);
+        padding: 8px 14px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
+    }
+    .tb-group { display: flex; align-items: center; gap: 6px; }
+    .tb-label { font-size: 9px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+    .toolbar button { flex: none; padding: 6px 10px; }
+
+    /* tool selector (segmented control, Spliiice-style) */
+    .tool-select { display: flex; gap: 4px; background: var(--bg-control); padding: 4px; border-radius: 8px; }
+    .tool-btn {
+        flex: none; width: 38px; height: 32px; padding: 0; border-radius: 6px;
+        background: transparent; border: 1px solid transparent; color: var(--text-secondary);
+        display: flex; align-items: center; justify-content: center;
+    }
+    .tool-btn svg { width: 17px; height: 17px; display: block; }
+    .tool-btn:hover { background: var(--bg-lighter); color: var(--text-primary); border-color: transparent; transform: none; }
+    .tool-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .tool-btn.active.eraser { background: var(--warning); border-color: var(--warning); color: #1a202c; }
+
+    /* eraser mode: roll cursor + note hover affordance */
+    .roll.eraser-mode { cursor: cell; }
+    .roll.eraser-mode .note-block:hover {
+        filter: none; outline: 2px solid var(--danger); outline-offset: -1px;
+        box-shadow: 0 0 10px var(--danger); opacity: 0.6;
+    }
+    .pos-display {
+        font-size: 13px; color: var(--accent); font-weight: 700;
+        background: var(--bg-main); padding: 5px 12px; border-radius: 3px;
+        border: 1px solid var(--border); letter-spacing: 1px; min-width: 90px; text-align: center;
+    }
+
+    /* ════ PIANO ROLL ════ */
+    .roll-wrap { flex: 1; display: flex; overflow: hidden; }
+    .keys-view { width: 54px; min-width: 54px; background: var(--bg-control); border-right: 1px solid var(--border); overflow: hidden; }
+    .keys-inner { position: relative; }
+    .pkey {
+        height: var(--row-h); border-bottom: 1px solid var(--border-soft);
+        display: flex; align-items: center; justify-content: flex-end; padding-right: 5px;
+        font-size: 7px; color: var(--text-secondary); user-select: none;
+    }
+    .pkey.black { background: rgba(0,0,0,0.35); color: #64748b; }
+    .pkey.c-note { color: var(--accent); font-weight: 700; }
+
+    .roll-col { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .ruler-view { height: 22px; min-height: 22px; background: var(--bg-control); border-bottom: 1px solid var(--border); overflow: hidden; position: relative; }
+    .ruler-inner { position: relative; height: 100%; }
+    .bar-tick {
+        position: absolute; top: 0; height: 100%; border-left: 1px solid var(--border);
+        font-size: 9px; color: var(--text-secondary); padding-left: 4px;
+        display: flex; align-items: center; font-weight: 700;
+    }
+    .bar-tick.beat { border-left-color: var(--border-soft); color: #64748b; font-weight: 400; }
+
+    .roll { flex: 1; overflow: auto; position: relative; background: var(--bg-roll); cursor: crosshair; }
+    .roll-inner { position: relative; }
+    .roll-grid { position: absolute; left: 0; top: 0; z-index: 0; pointer-events: none; }
+    .add-bars {
+        position: absolute; top: 8px; width: 156px; z-index: 8;
+        background: var(--bg-panel); border: 1px solid var(--border); border-radius: 5px;
+        padding: 8px; display: flex; flex-direction: column; gap: 4px;
+    }
+    .ab-label { font-size: 8px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; margin-top: 2px; }
+    .ab-row { display: flex; gap: 3px; }
+    .ab-btn { flex: 1; padding: 7px 2px; font-size: 9px; }
+    .ab-btn.copy { background: rgba(255,163,0,0.12); border-color: #FFA300; color: #FFA300; }
+    .ab-btn.copy:hover:not(:disabled) { background: #FFA300; color: var(--bg-main); border-color: #FFA300; }
+    .ab-btn:disabled { opacity: 0.28; cursor: not-allowed; }
+    .ab-btn:disabled:hover { background: rgba(255,163,0,0.12); color: #FFA300; }
+    .note-block {
+        position: absolute; border-radius: 2px; cursor: move; user-select: none;
+        box-shadow: 0 0 4px rgba(0,0,0,0.4); overflow: hidden;
+        transition: filter 0.05s; box-sizing: border-box;
+        border: 1px solid rgba(255,255,255,0.22);
+    }
+    .note-block.selected { outline: 2px solid #fff; outline-offset: -1px; z-index: 5; }
+    .note-block.playing { filter: brightness(1.8); box-shadow: 0 0 12px currentColor; }
+    .resize-h { position: absolute; right: 0; top: 0; width: 5px; height: 100%; cursor: ew-resize; background: rgba(255,255,255,0.2); }
+    .resize-h:hover { background: rgba(255,255,255,0.5); }
+
+    .playhead {
+        position: absolute; top: 0; width: 2px; background: var(--accent-alt);
+        box-shadow: 0 0 8px var(--accent-alt); z-index: 10; pointer-events: none;
+        left: 0; display: none;
+    }
+    .playhead.active { display: block; }
+
+    /* ════ MIDI MONITOR ════ */
+    .monitor {
+        background: var(--bg-panel);
+        border-top: 1px solid var(--border); display: flex; flex-direction: column; flex: none;
+        transition: height 0.18s ease;
+    }
+    .monitor.collapsed { height: 56px; }
+    .monitor.expanded { height: 180px; }
+    .monitor-head {
+        padding: 6px 14px; display: flex; align-items: center; justify-content: space-between;
+        border-bottom: 1px solid var(--border-soft); flex: none;
+    }
+    .monitor-title { font-size: 10px; color: var(--accent-alt); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }
+    .mon-btn { flex: none; padding: 4px 10px; font-size: 9px; }
+    .monitor-log { padding: 4px 14px; font-size: 11px; line-height: 1.5; }
+    .monitor.collapsed .monitor-log { overflow: hidden; flex: none; height: 24px; }
+    .monitor.expanded .monitor-log { overflow-y: auto; flex: 1; }
+    .log-line { display: flex; gap: 10px; white-space: nowrap; }
+    .log-time { color: #64748b; min-width: 64px; }
+    .log-type { min-width: 70px; font-weight: 700; }
+    .log-type.on { color: var(--accent); }
+    .log-type.off { color: var(--text-secondary); }
+    .log-type.cc { color: var(--accent-alt); }
+    .log-type.other { color: var(--warning); }
+    .log-data { color: var(--text-primary); }
+    .log-raw { color: #64748b; margin-left: auto; }
+    .log-empty { color: var(--text-secondary); font-style: italic; padding: 8px 0; }
+
+    /* ════ STATUS BAR ════ */
+    .status-bar {
+        background: var(--bg-panel); border-top: 1px solid var(--border);
+        padding: 6px 14px; display: flex; justify-content: space-between;
+        align-items: center; font-size: 9px; color: var(--text-secondary);
+    }
+    .status-info { display: flex; gap: 20px; }
+    .status-val { color: var(--accent); font-weight: 700; }
+
+    ::-webkit-scrollbar { width: 12px; height: 12px; }
+    ::-webkit-scrollbar-track { background: var(--bg-panel); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--bg-lighter); }
+</style>
+</head>
+<body>
+<div class="container">
+    <!-- HEADER -->
+    <div class="header" id="header">
+        <h1><span>◆</span> MIDI SEQ</h1>
+        <div class="header-right">
+            <div class="midi-status" id="midiStatus">
+                <span class="midi-activity" id="midiActivity"></span>
+                <span class="status-dot" id="statusDot"></span>
+                <span id="statusText">WAITING FOR MIDI</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="main">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="section">
+                <div class="section-title">Transport</div>
+                <div class="ctrl-row">
+                    <div class="ctrl">
+                        <div class="ctrl-label">BPM</div>
+                        <input type="number" id="bpm" min="40" max="300" value="120">
+                    </div>
+                    <div class="ctrl">
+                        <div class="ctrl-label">Loop (bars)</div>
+                        <input type="number" id="loopBarsInput" min="1" max="64" value="4">
+                    </div>
+                    <div class="ctrl">
+                        <div class="ctrl-label">Quant</div>
+                        <select id="quantize">
+                            <option value="0">Off</option>
+                            <option value="1">1/4</option>
+                            <option value="0.5">1/8</option>
+                            <option value="0.25" selected>1/16</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="transport-btns">
+                    <button id="recBtn">● REC</button>
+                    <button id="playBtn">▶ PLAY</button>
+                    <button id="stopBtn">■ STOP</button>
+                </div>
+                <div class="toggle-row">
+                    <input type="checkbox" id="precount">
+                    <label for="precount">Pre-count (1 bar before rec)</label>
+                </div>
+                <div class="toggle-row">
+                    <input type="checkbox" id="metronome">
+                    <label for="metronome">Metronome</label>
+                </div>
+                <div class="toggle-row">
+                    <input type="checkbox" id="audioPreview" checked>
+                    <label for="audioPreview">Audio preview (synth)</label>
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Recording</div>
+                <div class="ctrl">
+                    <div class="ctrl-label">Record Channel</div>
+                    <select id="recChannel">
+                        <option value="0">All Channels (Omni)</option>
+                    </select>
+                </div>
+                <div style="font-size:9px; color:var(--text-secondary); line-height:1.5;">
+                    Arm <b style="color:var(--danger)">REC</b>, then <b style="color:var(--accent)">PLAY</b> (or <b>Space</b>). Notes record live into the active track, looped.
+                </div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Tracks</div>
+                <div class="btn-row"><button id="addTrack">+ ADD TRACK</button></div>
+                <div class="tracks-list" id="tracksList"></div>
+            </div>
+
+            <div class="section">
+                <div class="section-title">Track Options</div>
+                <div class="ctrl">
+                    <div class="ctrl-label">MIDI Input</div>
+                    <select id="trkInput"><option value="">Omni (All)</option></select>
+                </div>
+                <div class="ctrl">
+                    <div class="ctrl-label">MIDI Output</div>
+                    <select id="trkOutput"><option value="">None (synth only)</option></select>
+                </div>
+                <div class="ctrl-row">
+                    <div class="ctrl">
+                        <div class="ctrl-label">Channel</div>
+                        <input type="number" id="trkChannel" min="1" max="16" value="1">
+                    </div>
+                    <div class="ctrl">
+                        <div class="ctrl-label">Velocity</div>
+                        <input type="number" id="trkVel" min="1" max="127" value="100">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- EDITOR -->
+        <div class="editor">
+            <div class="toolbar">
+                <div class="pos-display" id="posDisplay">1 : 1</div>
+                <div class="tb-group">
+                    <span class="tb-label">Tool</span>
+                    <div class="tool-select">
+                        <button class="tool-btn active" id="toolPencil" title="Pencil — draw notes (P)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>
+                        </button>
+                        <button class="tool-btn eraser" id="toolEraser" title="Eraser — delete notes (E)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20H7L3 16a2 2 0 0 1 0-2.83l9.17-9.17a2 2 0 0 1 2.83 0l5 5a2 2 0 0 1 0 2.83L13 18"/><path d="M8.5 8.5l7 7"/></svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="tb-group">
+                    <span class="tb-label">Edit</span>
+                    <button id="quantSel">Quantize</button>
+                    <button id="transUp">▲</button>
+                    <button id="transDown">▼</button>
+                </div>
+                <div style="flex:1"></div>
+                <div class="tb-group">
+                    <button id="saveBtn">💾 Save</button>
+                    <button id="loadBtn">📂 Load</button>
+                    <button id="clearTrack" class="danger">Clear Track</button>
+                </div>
+                <input type="file" id="projectFile" accept=".zip" style="display:none">
+            </div>
+
+            <div class="roll-wrap">
+                <div class="keys-view" id="keysView"><div class="keys-inner" id="keysInner"></div></div>
+                <div class="roll-col">
+                    <div class="ruler-view" id="rulerView"><div class="ruler-inner" id="rulerInner"></div></div>
+                    <div class="roll" id="roll">
+                        <div class="roll-inner" id="rollInner">
+                            <div class="roll-grid" id="rollGrid"></div>
+                            <div class="playhead" id="playhead"></div>
+                            <div class="add-bars" id="addBars"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MIDI MONITOR -->
+            <div class="monitor collapsed" id="monitor">
+                <div class="monitor-head">
+                    <span class="monitor-title">◇ MIDI Monitor</span>
+                    <div style="display:flex; gap:6px;">
+                        <button id="clearMon" class="mon-btn">Clear</button>
+                        <button id="monToggle" class="mon-btn">▴ Expand</button>
+                    </div>
+                </div>
+                <div class="monitor-log" id="monLog">
+                    <div class="log-empty">No MIDI received yet. Play a key on your controller…</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-info">
+            <div>TRACK: <span class="status-val" id="stTrack">Track 1</span></div>
+            <div>NOTES: <span class="status-val" id="stNotes">0</span></div>
+            <div>SELECTED: <span class="status-val" id="stSel">0</span></div>
+            <div>LOOP: <span class="status-val" id="stLoop">4 bars</span></div>
+        </div>
+        <div style="font-size:9px;">v2.0 · MASCHINE-STYLE LOOP SEQUENCER · WebMIDI + WebAudio</div>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" onerror="console.warn('JSZip not loaded')"></script>
+<script>
+// ════════════════════════════════════════════════════════════════════════
+//  MIDI LOOP SEQUENCER — Maschine-style
+// ════════════════════════════════════════════════════════════════════════
+const ROW_H = 14;
+const PX_BEAT = 60;       // pixels per quarter-note beat
+const BEATS_BAR = 4;      // 4/4
+// PICO-8 palette (16 colors). Black (#000000) excluded — invisible on the dark roll.
+const PICO8 = ['#1D2B53','#7E2553','#008751','#AB5236','#5F574F','#C2C3C7','#FFF1E8',
+               '#FF004D','#FFA300','#FFEC27','#00E436','#29ADFF','#83769C','#FF77A8','#FFCCAA'];
+const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+const noteName = n => NOTE_NAMES[n % 12] + (Math.floor(n / 12) - 1);
+
+class Seq {
+    constructor() {
+        this.midi = null;
+        this.inputs = new Map();
+        this.outputs = new Map();
+
+        this.bpm = 120;
+        this.loopBars = 4;
+        this.quantize = 0.25;        // beats; 0 = off
+        this.audioPreview = true;
+        this.metronome = false;
+
+        this.colorBag = [];
+        this.tracks = [this.newTrack(1)];
+        this.activeId = 1;
+        this.selected = new Set();
+        this.tool = 'pencil';        // 'pencil' (draw) | 'eraser' (delete)
+
+        this.playing = false;
+        this.armed = false;
+        this.precount = false;        // pre-count 1 bar before recording
+        this.precounting = false;
+        this.monExpanded = false;
+        this.startTime = 0;          // audioCtx time at loop-beat 0
+        this.lastBeat = 0;
+        this.activeNoteOns = new Map();   // recording: key -> {note,vel,ch,startBeat}
+        this.seqEcho = new Map();         // echo guard: note -> expiry(ms); blocks recording own playback
+        this.lastMetroBeat = -1;
+
+        this.monLog = [];
+        this.audio = null;
+        this.master = null;
+
+        this.initAudio();
+        this.initMIDI();
+        this.buildKeys();
+        this.buildRuler();
+        this.sizeRoll();
+        this.renderTracks();
+        this.renderRoll();
+        this.renderAddBars();
+        this.bindUI();
+        this.bindScrollSync();
+        this.updateStatus();
+    }
+
+    newTrack(id) {
+        return { id, name: 'Track ' + id, notes: [], inputId: null, outputId: null,
+                 channel: 0, velocity: 100, muted: false, color: this.dealColor() };
+    }
+    dealColor() {
+        // shuffled bag: deal each color once, reshuffle only when the palette is exhausted
+        if (!this.colorBag || this.colorBag.length === 0) {
+            this.colorBag = PICO8.slice();
+            for (let i = this.colorBag.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [this.colorBag[i], this.colorBag[j]] = [this.colorBag[j], this.colorBag[i]];
+            }
+        }
+        return this.colorBag.pop();
+    }
+    get active() { return this.tracks.find(t => t.id === this.activeId); }
+    secPerBeat() { return 60 / this.bpm; }
+    loopBeats() { return this.loopBars * BEATS_BAR; }
+
+    // ── AUDIO ──────────────────────────────────────────────
+    initAudio() {
+        try {
+            this.audio = new (window.AudioContext || window.webkitAudioContext)();
+            this.master = this.audio.createGain();
+            this.master.gain.value = 0.35;
+            this.master.connect(this.audio.destination);
+        } catch (e) { console.warn('No WebAudio', e); }
+    }
+    synth(midiNote, velocity, durSec) {
+        if (!this.audio || !this.audioPreview) return;
+        const t = this.audio.currentTime;
+        const osc = this.audio.createOscillator();
+        const g = this.audio.createGain();
+        osc.type = 'triangle';
+        osc.frequency.value = 440 * Math.pow(2, (midiNote - 69) / 12);
+        const peak = (velocity / 127) * 0.4;
+        const d = Math.max(0.06, durSec);
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(peak, t + 0.005);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + d);
+        osc.connect(g).connect(this.master);
+        osc.start(t); osc.stop(t + d + 0.02);
+    }
+    click(accent) {
+        if (!this.audio) return;
+        if (this.audio.state === 'suspended') this.audio.resume();
+        const t = this.audio.currentTime;
+        const osc = this.audio.createOscillator();
+        const g = this.audio.createGain();
+        osc.type = 'square';
+        osc.frequency.value = accent ? 2000 : 1200;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(accent ? 0.6 : 0.35, t + 0.001);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+        osc.connect(g).connect(this.master);
+        osc.start(t); osc.stop(t + 0.06);
+    }
+
+    // ── MIDI ───────────────────────────────────────────────
+    async initMIDI() {
+        if (!navigator.requestMIDIAccess) { this.setMidiStatus(false, 'Web MIDI not supported'); return; }
+        try {
+            this.midi = await navigator.requestMIDIAccess({ sysex: false });
+            this.scanDevices();
+            this.midi.onstatechange = () => this.scanDevices();
+            this.setMidiStatus(true);
+        } catch (e) {
+            console.warn('MIDI access denied/unavailable', e);
+            this.setMidiStatus(false, 'MIDI blocked — serve over http://localhost');
+        }
+    }
+    scanDevices() {
+        this.inputs.forEach(i => i.onmidimessage = null);
+        this.inputs.clear(); this.outputs.clear();
+        for (const inp of this.midi.inputs.values()) {
+            this.inputs.set(inp.id, inp);
+            inp.onmidimessage = e => this.onMIDI(e, inp.id);
+        }
+        for (const out of this.midi.outputs.values()) this.outputs.set(out.id, out);
+        this.fillDeviceSelects();
+        this.setMidiStatus(true);
+    }
+    onMIDI(event, inputId) {
+        const [status, d1, d2] = event.data;
+        const cmd = status >> 4;
+        const ch = status & 0x0F;
+
+        // activity blink + monitor (ALWAYS, regardless of record state)
+        this.blinkActivity();
+        this.logMidi(status, d1, d2, cmd, ch);
+
+        // input filter for active track
+        const trk = this.active;
+        if (trk && trk.inputId && trk.inputId !== inputId) return;
+        // channel filter
+        if (this.recChannel !== 0 && this.recChannel !== ch + 1) return;
+
+        if (!(this.playing && this.armed)) return;   // record only while playing + armed
+
+        // echo suppression: never record what the sequencer itself just played out
+        const echoExp = this.seqEcho.get(d1);
+        if (echoExp && performance.now() <= echoExp) return;
+
+        const beat = this.currentBeat();
+        if (cmd === 9 && d2 > 0) {                    // note on
+            this.activeNoteOns.set(d1 + '-' + ch, { note: d1, vel: d2, startBeat: beat });
+        } else if (cmd === 8 || (cmd === 9 && d2 === 0)) {  // note off
+            const on = this.activeNoteOns.get(d1 + '-' + ch);
+            if (on) { this.commitRecorded(on, beat); this.activeNoteOns.delete(d1 + '-' + ch); }
+        }
+    }
+    commitRecorded(on, endBeat) {
+        let dur = endBeat - on.startBeat;
+        if (dur < 0) dur += this.loopBeats();       // wrapped past loop end
+        dur = Math.max(0.0625, Math.min(dur, this.loopBeats()));
+        let start = on.startBeat;
+        if (this.quantize > 0) start = Math.round(start / this.quantize) * this.quantize;
+        const trk = this.active;
+        if (!trk) return;
+        trk.notes.push({ _id: 'n' + Date.now() + Math.random().toString(36).slice(2, 6),
+                         note: on.note, velocity: on.vel, startBeat: start % this.loopBeats(), durBeats: dur });
+        this.renderRoll(); this.renderTracks(); this.updateStatus();
+    }
+
+    sendOut(trk, bytes) {
+        const out = this.outputs.get(trk.outputId);
+        if (out) out.send(bytes);
+    }
+    allNotesOff() {
+        this.outputs.forEach(out => { for (let c = 0; c < 16; c++) out.send([0xB0 | c, 123, 0]); });
+        document.querySelectorAll('.note-block.playing').forEach(el => el.classList.remove('playing'));
+    }
+
+    // ── MIDI MONITOR ───────────────────────────────────────
+    blinkActivity() {
+        const el = document.getElementById('midiActivity');
+        el.classList.add('active');
+        clearTimeout(this._blinkT);
+        this._blinkT = setTimeout(() => el.classList.remove('active'), 80);
+    }
+    logMidi(status, d1, d2, cmd, ch) {
+        let type = 'other', cls = 'other', data = '';
+        if (cmd === 9 && d2 > 0) { type = 'NOTE ON'; cls = 'on'; data = `${noteName(d1)} (${d1})  vel ${d2}`; }
+        else if (cmd === 8 || (cmd === 9 && d2 === 0)) { type = 'NOTE OFF'; cls = 'off'; data = `${noteName(d1)} (${d1})`; }
+        else if (cmd === 11) { type = 'CC'; cls = 'cc'; data = `#${d1} = ${d2}`; }
+        else if (cmd === 14) { type = 'PITCH'; cls = 'cc'; data = `${((d2 << 7) | d1) - 8192}`; }
+        else if (cmd === 12) { type = 'PROGRAM'; data = `#${d1}`; }
+        else if (cmd === 13) { type = 'AFTERTCH'; data = `${d1}`; }
+        else { type = '0x' + status.toString(16).toUpperCase(); }
+        const now = new Date();
+        const ts = now.toTimeString().slice(0, 8) + '.' + String(now.getMilliseconds()).padStart(3, '0');
+        const raw = [status, d1, d2].map(b => (b ?? 0).toString(16).toUpperCase().padStart(2, '0')).join(' ');
+        this.monLog.push({ ts, type, cls, ch: ch + 1, data, raw });
+        if (this.monLog.length > 100) this.monLog.shift();
+        this.renderMonitor();
+    }
+    renderMonitor() {
+        const box = document.getElementById('monLog');
+        if (!this.monLog.length) { box.innerHTML = '<div class="log-empty">No MIDI received yet…</div>'; return; }
+        const count = this.monExpanded ? 40 : 1;
+        const lines = this.monLog.slice(-count).map(m =>
+            `<div class="log-line"><span class="log-time">${m.ts}</span>` +
+            `<span class="log-type ${m.cls}">${m.type}</span>` +
+            `<span class="log-data">ch${m.ch}  ${m.data}</span>` +
+            `<span class="log-raw">${m.raw}</span></div>`).join('');
+        box.innerHTML = lines;
+        if (this.monExpanded) box.scrollTop = box.scrollHeight;
+    }
+
+    // ── TRANSPORT ──────────────────────────────────────────
+    currentBeat() {
+        if (!this.playing) return 0;
+        const elapsed = this.audio.currentTime - this.startTime;
+        return (elapsed / this.secPerBeat()) % this.loopBeats();
+    }
+    play() {
+        if (this.playing || this.precounting) return;
+        if (this.audio && this.audio.state === 'suspended') this.audio.resume();
+        document.getElementById('playBtn').classList.add('playing');
+        if (this.armed && this.precount) this.startPrecount();
+        else this.startTransport();
+    }
+    startPrecount() {
+        this.precounting = true;
+        this.precountStart = this.audio.currentTime;
+        this.lastCountBeat = -1;
+        this.updateRecVisual();
+        this._raf = requestAnimationFrame(() => this.animatePrecount());
+    }
+    animatePrecount() {
+        if (!this.precounting) return;
+        const beat = (this.audio.currentTime - this.precountStart) / this.secPerBeat();
+        const wb = Math.floor(beat);
+        if (wb !== this.lastCountBeat && wb < BEATS_BAR) {
+            this.click(wb === 0);          // pre-count always clicks
+            this.lastCountBeat = wb;
+        }
+        document.getElementById('posDisplay').textContent = '⏱ ' + Math.max(1, BEATS_BAR - wb);
+        if (beat >= BEATS_BAR) { this.precounting = false; this.startTransport(); return; }
+        this._raf = requestAnimationFrame(() => this.animatePrecount());
+    }
+    startTransport() {
+        this.playing = true;
+        this.startTime = this.audio.currentTime;
+        this.lastBeat = 0;
+        this.lastMetroBeat = -1;
+        document.getElementById('playhead').classList.add('active');
+        this.updateRecVisual();
+        this._raf = requestAnimationFrame(() => this.animate());
+    }
+    stop() {
+        this.playing = false;
+        this.precounting = false;
+        cancelAnimationFrame(this._raf);
+        // finalize any held recorded notes
+        this.activeNoteOns.forEach(on => this.commitRecorded(on, this.lastBeat));
+        this.activeNoteOns.clear();
+        this.allNotesOff();
+        document.getElementById('playBtn').classList.remove('playing');
+        document.getElementById('playhead').classList.remove('active');
+        document.getElementById('playhead').style.left = '0px';
+        document.getElementById('posDisplay').textContent = '1 : 1';
+        this.lastBeat = 0;
+        this.updateRecVisual();
+    }
+    toggleTransport() { (this.playing || this.precounting) ? this.stop() : this.play(); }
+
+    arm() {
+        this.armed = !this.armed;
+        this.updateRecVisual();
+    }
+    updateRecVisual() {
+        const btn = document.getElementById('recBtn');
+        const hdr = document.getElementById('header');
+        btn.classList.toggle('armed', this.armed && !this.playing);
+        btn.classList.toggle('recording', this.armed && this.playing);
+        hdr.classList.toggle('recording', this.armed && this.playing);
+        btn.textContent = (this.armed && this.playing) ? '● REC' : (this.armed ? '● ARMED' : '● REC');
+    }
+
+    animate() {
+        if (!this.playing) return;
+        const cur = this.currentBeat();
+        const px = cur * PX_BEAT;
+        document.getElementById('playhead').style.left = px + 'px';
+
+        // position readout (bar : beat)
+        const bar = Math.floor(cur / BEATS_BAR) + 1;
+        const beatInBar = Math.floor(cur % BEATS_BAR) + 1;
+        document.getElementById('posDisplay').textContent = bar + ' : ' + beatInBar;
+
+        // metronome
+        if (this.metronome) {
+            const wholeBeat = Math.floor(cur);
+            if (wholeBeat !== this.lastMetroBeat) {
+                this.click(wholeBeat % BEATS_BAR === 0);
+                this.lastMetroBeat = wholeBeat;
+            }
+        }
+
+        // trigger notes crossed since last frame (loop-aware)
+        const lb = this.lastBeat;
+        if (cur >= lb) this.triggerRange(lb, cur);
+        else { this.triggerRange(lb, this.loopBeats()); this.triggerRange(-1, cur); }
+        this.lastBeat = cur;
+
+        this._raf = requestAnimationFrame(() => this.animate());
+    }
+    triggerRange(from, to) {
+        for (const trk of this.tracks) {
+            if (trk.muted) continue;
+            for (const n of trk.notes) {
+                if (n.startBeat > from && n.startBeat <= to) this.fire(trk, n);
+            }
+        }
+    }
+    fire(trk, n) {
+        const durSec = n.durBeats * this.secPerBeat();
+        // visual flash
+        const el = document.querySelector(`[data-id="${n._id}"]`);
+        if (el) {
+            el.classList.add('playing');
+            setTimeout(() => el.classList.remove('playing'), Math.min(durSec * 1000, 600));
+        }
+        // synth preview
+        this.synth(n.note, n.velocity, durSec);
+        // MIDI out — register echo guard so the loopback isn't recorded
+        if (trk.outputId) {
+            const ch = trk.channel & 0x0F;
+            this.sendOut(trk, [0x90 | ch, n.note, n.velocity]);
+            this.seqEcho.set(n.note, performance.now() + durSec * 1000 + 120);
+            setTimeout(() => this.sendOut(trk, [0x80 | ch, n.note, 0]), durSec * 1000);
+        }
+    }
+
+    // ── BUILD UI ───────────────────────────────────────────
+    buildKeys() {
+        const inner = document.getElementById('keysInner');
+        inner.style.height = (128 * ROW_H) + 'px';
+        let html = '';
+        for (let i = 127; i >= 0; i--) {
+            const pc = i % 12;
+            const black = [1, 3, 6, 8, 10].includes(pc);
+            const isC = pc === 0;
+            html += `<div class="pkey ${black ? 'black' : ''} ${isC ? 'c-note' : ''}">${noteName(i)}</div>`;
+        }
+        inner.innerHTML = html;
+    }
+    buildRuler() {
+        const inner = document.getElementById('rulerInner');
+        const beats = this.loopBeats();
+        inner.style.width = (beats * PX_BEAT) + 'px';
+        let html = '';
+        for (let b = 0; b < beats; b++) {
+            const isBar = b % BEATS_BAR === 0;
+            const label = isBar ? (b / BEATS_BAR + 1) : '';
+            html += `<div class="bar-tick ${isBar ? '' : 'beat'}" style="left:${b * PX_BEAT}px">${label}</div>`;
+        }
+        inner.innerHTML = html;
+    }
+    sizeRoll() {
+        const inner = document.getElementById('rollInner');
+        const grid = document.getElementById('rollGrid');
+        const tlWidth = this.loopBeats() * PX_BEAT;
+        const fullH = 128 * ROW_H;
+        inner.style.width = (tlWidth + 200) + 'px';   // extra room so add-bars panel is scrollable into view
+        inner.style.height = fullH + 'px';
+        grid.style.width = tlWidth + 'px';
+        grid.style.height = fullH + 'px';
+        grid.style.backgroundImage =
+            `repeating-linear-gradient(90deg, var(--border) 0 1px, transparent 1px ${BEATS_BAR * PX_BEAT}px),` +
+            `repeating-linear-gradient(90deg, var(--border-soft) 0 1px, transparent 1px ${PX_BEAT}px),` +
+            `repeating-linear-gradient(0deg, var(--border-soft) 0 1px, transparent 1px ${ROW_H}px)`;
+        document.getElementById('playhead').style.height = fullH + 'px';
+    }
+    renderAddBars() {
+        const el = document.getElementById('addBars');
+        const sizes = [1, 2, 4, 8, 16];
+        const tlWidth = this.loopBeats() * PX_BEAT;
+        el.style.left = (tlWidth + 14) + 'px';
+        let html = '<div class="ab-label">+ empty bars</div><div class="ab-row">';
+        html += sizes.map(s => `<button class="ab-btn" data-n="${s}" data-copy="0">+${s}</button>`).join('');
+        html += '</div><div class="ab-label" style="color:#FFA300">+ copy previous</div><div class="ab-row">';
+        html += sizes.map(s => {
+            const dis = s > this.loopBars ? 'disabled' : '';
+            return `<button class="ab-btn copy" data-n="${s}" data-copy="1" ${dis}>+${s}</button>`;
+        }).join('');
+        html += '</div>';
+        el.innerHTML = html;
+        el.querySelectorAll('.ab-btn').forEach(b => {
+            b.onclick = () => { if (!b.disabled) this.addBars(parseInt(b.dataset.n), b.dataset.copy === '1'); };
+        });
+    }
+    addBars(n, copy) {
+        const startNew = this.loopBeats();                 // beat where appended region begins
+        if (copy) {
+            const srcStart = startNew - n * BEATS_BAR;      // last n bars
+            if (srcStart < 0) return;                       // not enough bars to copy
+            const offset = n * BEATS_BAR;
+            this.tracks.forEach(t => {
+                const copies = [];
+                t.notes.forEach(nt => {
+                    if (nt.startBeat >= srcStart && nt.startBeat < startNew) {
+                        copies.push({ _id: 'n' + Date.now() + Math.random().toString(36).slice(2, 6),
+                                      note: nt.note, velocity: nt.velocity,
+                                      startBeat: nt.startBeat + offset, durBeats: nt.durBeats });
+                    }
+                });
+                t.notes.push(...copies);
+            });
+        }
+        this.loopBars += n;
+        document.getElementById('loopBarsInput').value = this.loopBars;
+        this.rebuildTimeline();
+    }
+    setLoopBars(n) {
+        n = Math.max(1, Math.min(64, n || 1));
+        const newBeats = n * BEATS_BAR;
+        if (newBeats < this.loopBeats()) {                  // trimming — drop/clamp notes past the new end
+            this.tracks.forEach(t => {
+                t.notes = t.notes.filter(nt => nt.startBeat < newBeats);
+                t.notes.forEach(nt => { if (nt.startBeat + nt.durBeats > newBeats) nt.durBeats = newBeats - nt.startBeat; });
+            });
+        }
+        this.loopBars = n;
+        document.getElementById('loopBarsInput').value = n;
+        this.rebuildTimeline();
+    }
+    rebuildTimeline() {
+        this.buildRuler(); this.sizeRoll(); this.renderRoll(); this.renderAddBars(); this.updateStatus();
+    }
+
+    renderTracks() {
+        const list = document.getElementById('tracksList');
+        list.innerHTML = '';
+        this.tracks.forEach(trk => {
+            const item = document.createElement('div');
+            item.className = 'track-item' + (trk.id === this.activeId ? ' active' : '');
+            item.innerHTML =
+                `<div class="track-color" style="background:${trk.color}"></div>` +
+                `<div class="track-meta"><div class="track-name">${trk.name}</div>` +
+                `<div class="track-info">${trk.notes.length} notes · ch${trk.channel + 1}</div></div>` +
+                `<button class="track-mute ${trk.muted ? 'muted' : ''}">M</button>`;
+            item.addEventListener('click', e => {
+                if (e.target.classList.contains('track-mute')) { trk.muted = !trk.muted; this.renderTracks(); return; }
+                this.selectTrack(trk.id);
+            });
+            list.appendChild(item);
+        });
+    }
+
+    renderRoll() {
+        const inner = document.getElementById('rollInner');
+        // remove existing notes (keep playhead)
+        inner.querySelectorAll('.note-block').forEach(el => el.remove());
+        const trk = this.active;
+        if (!trk) return;
+        trk.notes.forEach(n => {
+            const el = document.createElement('div');
+            el.className = 'note-block' + (this.selected.has(n) ? ' selected' : '');
+            el.dataset.id = n._id;
+            el.style.left = (n.startBeat * PX_BEAT) + 'px';
+            el.style.top = ((127 - n.note) * ROW_H) + 'px';
+            el.style.width = Math.max(6, n.durBeats * PX_BEAT) + 'px';
+            el.style.height = ROW_H + 'px';
+            el.style.background = trk.color;
+            el.style.color = trk.color;
+            el.innerHTML = '<div class="resize-h"></div>';
+            el.addEventListener('click', e => {
+                e.stopPropagation();
+                if (this.tool === 'eraser') { this.eraseNote(n); return; }
+                if (e.ctrlKey || e.metaKey) { this.selected.has(n) ? this.selected.delete(n) : this.selected.add(n); }
+                else { this.selected.clear(); this.selected.add(n); }
+                this.renderRoll(); this.updateStatus();
+            });
+            el.addEventListener('mousedown', e => {
+                e.stopPropagation();
+                if (this.tool === 'eraser') return;          // no dragging while erasing
+                if (e.target.classList.contains('resize-h')) this.dragResize(n, e);
+                else this.dragMove(n, e);
+            });
+            inner.appendChild(el);
+        });
+    }
+
+    addNoteAt(clientX, clientY) {
+        const inner = document.getElementById('rollInner');
+        const rect = inner.getBoundingClientRect();
+        const x = clientX - rect.left;
+        const y = clientY - rect.top;
+        let startBeat = x / PX_BEAT;
+        if (this.quantize > 0) startBeat = Math.round(startBeat / this.quantize) * this.quantize;
+        const note = Math.max(0, Math.min(127, 127 - Math.floor(y / ROW_H)));
+        const trk = this.active; if (!trk) return;
+        const dur = this.quantize > 0 ? this.quantize : 0.5;
+        const n = { _id: 'n' + Date.now() + Math.random().toString(36).slice(2, 6),
+                    note, velocity: trk.velocity, startBeat: Math.max(0, startBeat), durBeats: dur };
+        trk.notes.push(n);
+        this.selected.clear(); this.selected.add(n);
+        this.synth(note, trk.velocity, 0.2);
+        this.renderRoll(); this.renderTracks(); this.updateStatus();
+    }
+
+    dragMove(n, ev) {
+        const sx = ev.clientX, sy = ev.clientY, ot = n.startBeat, on = n.note;
+        const move = e => {
+            n.startBeat = Math.max(0, Math.min(this.loopBeats() - n.durBeats, ot + (e.clientX - sx) / PX_BEAT));
+            n.note = Math.max(0, Math.min(127, on - Math.round((e.clientY - sy) / ROW_H)));
+            this.renderRoll();
+        };
+        const up = () => {
+            document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up);
+            if (this.quantize > 0) n.startBeat = Math.round(n.startBeat / this.quantize) * this.quantize;
+            this.renderRoll();
+        };
+        document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
+    }
+    dragResize(n, ev) {
+        const sx = ev.clientX, od = n.durBeats;
+        const move = e => {
+            n.durBeats = Math.max(0.0625, Math.min(this.loopBeats() - n.startBeat, od + (e.clientX - sx) / PX_BEAT));
+            this.renderRoll();
+        };
+        const up = () => {
+            document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up);
+            this.renderRoll();
+        };
+        document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
+    }
+
+    selectTrack(id) {
+        this.activeId = id; this.selected.clear();
+        this.renderTracks(); this.renderRoll(); this.syncTrackOptions(); this.updateStatus();
+    }
+    addTrack() {
+        const id = Math.max(0, ...this.tracks.map(t => t.id)) + 1;
+        this.tracks.push(this.newTrack(id));
+        this.selectTrack(id);
+    }
+    deleteSelected() {
+        const trk = this.active; if (!trk) return;
+        trk.notes = trk.notes.filter(n => !this.selected.has(n));
+        this.selected.clear();
+        this.renderRoll(); this.renderTracks(); this.updateStatus();
+    }
+    eraseNote(n) {
+        const trk = this.active; if (!trk) return;
+        trk.notes = trk.notes.filter(x => x !== n);
+        this.selected.delete(n);
+        this.renderRoll(); this.renderTracks(); this.updateStatus();
+    }
+    setTool(tool) {
+        this.tool = tool;
+        document.getElementById('toolPencil').classList.toggle('active', tool === 'pencil');
+        document.getElementById('toolEraser').classList.toggle('active', tool === 'eraser');
+        document.getElementById('roll').classList.toggle('eraser-mode', tool === 'eraser');
+    }
+
+    // ── PROJECT SAVE / LOAD (zip, Spliiice-style) ──────────
+    async saveProject() {
+        if (typeof JSZip === 'undefined') { alert('JSZip failed to load — check your connection and reload.'); return; }
+        const zip = new JSZip();
+        const project = {
+            app: 'midi-sequencer', version: 2,
+            bpm: this.bpm, loopBars: this.loopBars, quantize: this.quantize, activeId: this.activeId,
+            tracks: this.tracks.map(t => ({
+                id: t.id, name: t.name, color: t.color, channel: t.channel,
+                velocity: t.velocity, muted: t.muted, inputId: t.inputId, outputId: t.outputId,
+                notes: t.notes.map(n => ({ note: n.note, velocity: n.velocity, startBeat: n.startBeat, durBeats: n.durBeats }))
+            }))
+        };
+        zip.file('project.json', JSON.stringify(project, null, 2));
+        const blob = await zip.generateAsync({ type: 'blob' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `midiseq_project_${Date.now()}.zip`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+    loadProject() { document.getElementById('projectFile').click(); }
+    async applyProjectFile(file) {
+        if (!file) return;
+        if (typeof JSZip === 'undefined') { alert('JSZip failed to load — check your connection and reload.'); return; }
+        try {
+            const zip = await JSZip.loadAsync(file);
+            const entry = zip.file('project.json');
+            if (!entry) { alert('Invalid project: project.json not found in the zip.'); return; }
+            const data = JSON.parse(await entry.async('string'));
+
+            this.stop();
+            this.bpm = data.bpm || 120;
+            this.loopBars = Math.max(1, data.loopBars || 4);
+            this.quantize = (data.quantize != null) ? data.quantize : 0.25;
+            this.colorBag = [];
+            this.tracks = (data.tracks || []).map(t => ({
+                id: t.id,
+                name: t.name || ('Track ' + t.id),
+                color: t.color || this.dealColor(),
+                channel: t.channel || 0,
+                velocity: t.velocity || 100,
+                muted: !!t.muted,
+                inputId: (t.inputId && this.inputs.has(t.inputId)) ? t.inputId : null,   // device may not exist now
+                outputId: (t.outputId && this.outputs.has(t.outputId)) ? t.outputId : null,
+                notes: (t.notes || []).map(n => ({
+                    _id: 'n' + Date.now() + Math.random().toString(36).slice(2, 6),
+                    note: n.note, velocity: n.velocity, startBeat: n.startBeat, durBeats: n.durBeats
+                }))
+            }));
+            if (!this.tracks.length) this.tracks = [this.newTrack(1)];
+            this.activeId = (data.activeId && this.tracks.some(t => t.id === data.activeId)) ? data.activeId : this.tracks[0].id;
+            this.selected.clear();
+
+            // sync UI controls
+            document.getElementById('bpm').value = this.bpm;
+            document.getElementById('loopBarsInput').value = this.loopBars;
+            document.getElementById('quantize').value = String(this.quantize);
+
+            // rebuild everything
+            this.fillDeviceSelects();
+            this.renderTracks();
+            this.rebuildTimeline();
+            this.syncTrackOptions();
+        } catch (err) {
+            console.error(err);
+            alert('Failed to load project: ' + err.message);
+        }
+    }
+    quantizeSelected() {
+        if (this.quantize <= 0) return;
+        const targets = this.selected.size ? [...this.selected] : (this.active ? this.active.notes : []);
+        targets.forEach(n => n.startBeat = Math.round(n.startBeat / this.quantize) * this.quantize);
+        this.renderRoll();
+    }
+    transpose(semi) {
+        this.selected.forEach(n => n.note = Math.max(0, Math.min(127, n.note + semi)));
+        this.renderRoll();
+    }
+
+    // ── DEVICE SELECTS ─────────────────────────────────────
+    fillDeviceSelects() {
+        const recCh = document.getElementById('recChannel');
+        if (recCh.options.length <= 1) {
+            for (let c = 1; c <= 16; c++) recCh.add(new Option('Channel ' + c, String(c)));
+        }
+        const inSel = document.getElementById('trkInput');
+        const outSel = document.getElementById('trkOutput');
+        const inVal = inSel.value, outVal = outSel.value;
+        inSel.innerHTML = '<option value="">Omni (All)</option>';
+        outSel.innerHTML = '<option value="">None (synth only)</option>';
+        this.inputs.forEach((inp, id) => inSel.add(new Option(inp.name || id, id)));
+        this.outputs.forEach((out, id) => outSel.add(new Option(out.name || id, id)));
+        inSel.value = inVal; outSel.value = outVal;
+        this.syncTrackOptions();
+    }
+    syncTrackOptions() {
+        const trk = this.active; if (!trk) return;
+        document.getElementById('trkInput').value = trk.inputId || '';
+        document.getElementById('trkOutput').value = trk.outputId || '';
+        document.getElementById('trkChannel').value = trk.channel + 1;
+        document.getElementById('trkVel').value = trk.velocity;
+    }
+
+    // ── STATUS ─────────────────────────────────────────────
+    get recChannel() { return parseInt(document.getElementById('recChannel').value) || 0; }
+    setMidiStatus(ok, msg) {
+        const box = document.getElementById('midiStatus');
+        const dot = document.getElementById('statusDot');
+        const txt = document.getElementById('statusText');
+        box.classList.toggle('connected', ok);
+        dot.classList.toggle('connected', ok);
+        if (ok) txt.textContent = `READY · ${this.inputs.size} IN · ${this.outputs.size} OUT`;
+        else txt.textContent = msg || 'NO MIDI';
+    }
+    updateStatus() {
+        const trk = this.active;
+        document.getElementById('stTrack').textContent = trk ? trk.name : '—';
+        document.getElementById('stNotes').textContent = trk ? trk.notes.length : 0;
+        document.getElementById('stSel').textContent = this.selected.size;
+        document.getElementById('stLoop').textContent = this.loopBars + ' bars';
+    }
+
+    // ── SCROLL SYNC ────────────────────────────────────────
+    bindScrollSync() {
+        const roll = document.getElementById('roll');
+        roll.addEventListener('scroll', () => {
+            document.getElementById('rulerView').scrollLeft = roll.scrollLeft;
+            document.getElementById('keysView').scrollTop = roll.scrollTop;
+            document.getElementById('addBars').style.top = (roll.scrollTop + 8) + 'px';  // keep panel in view
+        });
+    }
+
+    // ── EVENTS ─────────────────────────────────────────────
+    bindUI() {
+        document.getElementById('recBtn').onclick = () => this.arm();
+        document.getElementById('playBtn').onclick = () => this.play();
+        document.getElementById('stopBtn').onclick = () => this.stop();
+        document.getElementById('addTrack').onclick = () => this.addTrack();
+        document.getElementById('quantSel').onclick = () => this.quantizeSelected();
+        document.getElementById('transUp').onclick = () => this.transpose(1);
+        document.getElementById('transDown').onclick = () => this.transpose(-1);
+        document.getElementById('clearMon').onclick = () => { this.monLog = []; this.renderMonitor(); };
+        document.getElementById('monToggle').onclick = () => {
+            this.monExpanded = !this.monExpanded;
+            const m = document.getElementById('monitor');
+            m.classList.toggle('expanded', this.monExpanded);
+            m.classList.toggle('collapsed', !this.monExpanded);
+            document.getElementById('monToggle').textContent = this.monExpanded ? '▾ Collapse' : '▴ Expand';
+            this.renderMonitor();
+        };
+        document.getElementById('clearTrack').onclick = () => {
+            if (this.active) { this.active.notes = []; this.selected.clear(); this.renderRoll(); this.renderTracks(); this.updateStatus(); }
+        };
+
+        document.getElementById('bpm').onchange = e => this.bpm = Math.max(40, Math.min(300, parseInt(e.target.value) || 120));
+        document.getElementById('loopBarsInput').onchange = e => this.setLoopBars(parseInt(e.target.value));
+        document.getElementById('quantize').onchange = e => this.quantize = parseFloat(e.target.value);
+        document.getElementById('audioPreview').onchange = e => this.audioPreview = e.target.checked;
+        document.getElementById('metronome').onchange = e => this.metronome = e.target.checked;
+        document.getElementById('precount').onchange = e => this.precount = e.target.checked;
+
+        document.getElementById('trkInput').onchange = e => { if (this.active) this.active.inputId = e.target.value || null; };
+        document.getElementById('trkOutput').onchange = e => { if (this.active) this.active.outputId = e.target.value || null; };
+        document.getElementById('trkChannel').onchange = e => { if (this.active) this.active.channel = (parseInt(e.target.value) || 1) - 1; this.renderTracks(); };
+        document.getElementById('trkVel').onchange = e => { if (this.active) this.active.velocity = Math.max(1, Math.min(127, parseInt(e.target.value) || 100)); };
+
+        document.getElementById('saveBtn').onclick = () => this.saveProject();
+        document.getElementById('loadBtn').onclick = () => this.loadProject();
+        document.getElementById('projectFile').addEventListener('change', e => {
+            this.applyProjectFile(e.target.files[0]);
+            e.target.value = '';   // allow re-loading the same file
+        });
+
+        // click on empty roll → add note (pencil only; listener attached ONCE)
+        document.getElementById('rollInner').addEventListener('click', e => {
+            if (e.target.id === 'rollInner' && this.tool === 'pencil') this.addNoteAt(e.clientX, e.clientY);
+        });
+
+        // tool selector
+        document.getElementById('toolPencil').onclick = () => this.setTool('pencil');
+        document.getElementById('toolEraser').onclick = () => this.setTool('eraser');
+
+        // keyboard
+        document.addEventListener('keydown', e => {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+            if (e.code === 'Space') { e.preventDefault(); this.toggleTransport(); }
+            else if (e.code === 'KeyR') { e.preventDefault(); this.arm(); }
+            else if (e.code === 'KeyP') { e.preventDefault(); this.setTool('pencil'); }
+            else if (e.code === 'KeyE') { e.preventDefault(); this.setTool('eraser'); }
+            else if (e.code === 'Delete' || e.code === 'Backspace') { e.preventDefault(); this.deleteSelected(); }
+        });
+    }
+}
+
+window.seq = new Seq();
+</script>
+</body>
+</html>
