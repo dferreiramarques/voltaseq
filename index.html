@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MIDI Sequencer — Maschine-style Loop</title>
+<title>VoltaSeq — Loop Sequencer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -45,7 +45,7 @@
     input[type="number"], .pos-display, .log-time, .log-raw, .log-data, .status-val,
     .pkey, .bar-tick, .ctrl-label { font-family: 'JetBrains Mono', 'Courier New', monospace; }
 
-    .container { display: flex; flex-direction: column; height: 100vh; }
+    .container { display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
 
     /* ════ HEADER ════ */
     .header {
@@ -265,9 +265,9 @@
     .monitor {
         background: var(--bg-panel);
         border-top: 1px solid var(--border); display: flex; flex-direction: column; flex: none;
-        transition: height 0.18s ease;
+        transition: height 0.18s ease; overflow: hidden;
     }
-    .monitor.collapsed { height: 56px; }
+    .monitor.collapsed { height: 62px; }
     .monitor.expanded { height: 180px; }
     .monitor-head {
         padding: 6px 14px; display: flex; align-items: center; justify-content: space-between;
@@ -276,7 +276,7 @@
     .monitor-title { font-size: 10px; color: var(--accent-alt); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; }
     .mon-btn { flex: none; padding: 4px 10px; font-size: 9px; }
     .monitor-log { padding: 4px 14px; font-size: 11px; line-height: 1.5; }
-    .monitor.collapsed .monitor-log { overflow: hidden; flex: none; height: 24px; }
+    .monitor.collapsed .monitor-log { overflow: hidden; flex: none; height: 26px; }
     .monitor.expanded .monitor-log { overflow-y: auto; flex: 1; }
     .log-line { display: flex; gap: 10px; white-space: nowrap; }
     .log-time { color: #64748b; min-width: 64px; }
@@ -287,11 +287,11 @@
     .log-type.other { color: var(--warning); }
     .log-data { color: var(--text-primary); }
     .log-raw { color: #64748b; margin-left: auto; }
-    .log-empty { color: var(--text-secondary); font-style: italic; padding: 8px 0; }
+    .log-empty { color: var(--text-secondary); font-style: italic; padding: 2px 0; }
 
     /* ════ STATUS BAR ════ */
     .status-bar {
-        background: var(--bg-panel); border-top: 1px solid var(--border);
+        background: var(--bg-panel); border-top: 1px solid var(--border); flex: none;
         padding: 6px 14px; display: flex; justify-content: space-between;
         align-items: center; font-size: 9px; color: var(--text-secondary);
     }
@@ -308,7 +308,7 @@
 <div class="container">
     <!-- HEADER -->
     <div class="header" id="header">
-        <h1><span>◆</span> MIDI SEQ</h1>
+        <h1><span>◆</span> VoltaSeq</h1>
         <div class="header-right">
             <div class="midi-status" id="midiStatus">
                 <span class="midi-activity" id="midiActivity"></span>
@@ -475,14 +475,14 @@
             <div>SELECTED: <span class="status-val" id="stSel">0</span></div>
             <div>LOOP: <span class="status-val" id="stLoop">4 bars</span></div>
         </div>
-        <div style="font-size:9px;">v2.0 · LOOP SEQUENCER · WebMIDI + WebAudio</div>
+        <div style="font-size:9px;">VoltaSeq v2.0 · WebMIDI + WebAudio</div>
     </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" onerror="console.warn('JSZip not loaded')"></script>
 <script>
 // ════════════════════════════════════════════════════════════════════════
-//  MIDI LOOP SEQUENCER — Maschine-style
+//  VoltaSeq — Loop Sequencer
 // ════════════════════════════════════════════════════════════════════════
 const ROW_H = 14;
 const PX_BEAT = 60;       // pixels per quarter-note beat
@@ -1161,7 +1161,7 @@ class Seq {
         if (typeof JSZip === 'undefined') { alert('JSZip failed to load — check your connection and reload.'); return; }
         const zip = new JSZip();
         const project = {
-            app: 'midi-sequencer', version: 2,
+            app: 'voltaseq', version: 2,
             bpm: this.bpm, loopBars: this.loopBars, quantize: this.quantize, activeId: this.activeId,
             tracks: this.tracks.map(t => ({
                 id: t.id, name: t.name, color: t.color, channel: t.channel,
@@ -1174,7 +1174,7 @@ class Seq {
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `midiseq_project_${Date.now()}.zip`;
+        a.download = `voltaseq_project_${Date.now()}.zip`;
         document.body.appendChild(a); a.click(); document.body.removeChild(a);
         URL.revokeObjectURL(url);
     }
