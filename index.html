@@ -81,7 +81,7 @@
     .midi-activity.active { background: var(--accent-alt); box-shadow: 0 0 8px var(--accent-alt); }
 
     /* ════ MAIN ════ */
-    .main { display: flex; flex: 1; overflow: hidden; }
+    .main { display: flex; flex: 1; overflow: hidden; min-height: 0; }
 
     /* ════ SIDEBAR ════ */
     .sidebar {
@@ -121,6 +121,8 @@
     }
     button:hover { background: var(--bg-lighter); border-color: var(--accent); color: var(--text-primary); }
     button:active { transform: scale(0.98); }
+    button:disabled { opacity: 0.35; cursor: not-allowed; }
+    button:disabled:hover { background: var(--bg-control); border-color: var(--border); color: var(--text-primary); transform: none; }
     button.danger { background: var(--bg-control); border-color: var(--border); color: var(--danger); }
     button.danger:hover { background: var(--danger); color: #fff; border-color: var(--danger); }
 
@@ -152,7 +154,7 @@
     .toggle-row label { font-size: 10px; color: var(--text-secondary); cursor: pointer; }
 
     /* ════ EDITOR ════ */
-    .editor { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .editor { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
     .toolbar {
         background: var(--bg-panel); border-bottom: 1px solid var(--border);
         padding: 8px 14px; display: flex; gap: 14px; align-items: center; flex-wrap: wrap;
@@ -160,6 +162,7 @@
     .tb-group { display: flex; align-items: center; gap: 6px; }
     .tb-label { font-size: 9px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
     .toolbar button { flex: none; padding: 6px 10px; }
+    .toolbar-select { width: auto; padding: 6px 8px; font-size: 11px; }
 
     /* tool selector (segmented control, Spliiice-style) */
     .tool-select { display: flex; gap: 4px; background: var(--bg-control); padding: 4px; border-radius: 8px; }
@@ -186,7 +189,7 @@
     }
 
     /* ════ PIANO ROLL ════ */
-    .roll-wrap { flex: 1; display: flex; overflow: hidden; }
+    .roll-wrap { flex: 1; display: flex; overflow: hidden; min-height: 0; }
     .keys-view { width: 54px; min-width: 54px; background: var(--bg-control); border-right: 1px solid var(--border); overflow: hidden; }
     .keys-inner { position: relative; }
     .pkey {
@@ -240,7 +243,25 @@
     }
     .playhead.active { display: block; }
 
-    /* ════ MIDI MONITOR ════ */
+    /* ════ VELOCITY LANE ════ */
+    .velocity-lane { height: 76px; min-height: 76px; flex: none; display: flex; background: var(--bg-panel); border-top: 1px solid var(--border); }
+    .vel-label {
+        width: 54px; min-width: 54px; background: var(--bg-control); border-right: 1px solid var(--border);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 9px; font-weight: 700; letter-spacing: 1px; color: var(--text-secondary); text-transform: uppercase;
+    }
+    .vel-view { flex: 1; overflow: hidden; position: relative; }
+    .vel-inner { position: relative; height: 100%; }
+    .vel-marker { position: absolute; bottom: 8px; width: 0; }
+    .vel-stem { position: absolute; bottom: 0; left: -1px; width: 2px; background: currentColor; opacity: 0.5; }
+    .vel-head {
+        position: absolute; left: -5px; width: 10px; height: 10px; border-radius: 50%;
+        background: currentColor; cursor: ns-resize; box-shadow: 0 0 4px rgba(0,0,0,0.5);
+        border: 1px solid rgba(255,255,255,0.3);
+    }
+    .vel-head:hover { filter: brightness(1.4); transform: scale(1.25); }
+    .vel-marker.selected .vel-head { outline: 2px solid #fff; outline-offset: 1px; }
+    .vel-baseline { position: absolute; bottom: 8px; left: 0; right: 0; height: 1px; background: var(--border-soft); }
     .monitor {
         background: var(--bg-panel);
         border-top: 1px solid var(--border); display: flex; flex-direction: column; flex: none;
@@ -310,15 +331,6 @@
                     <div class="ctrl">
                         <div class="ctrl-label">Loop (bars)</div>
                         <input type="number" id="loopBarsInput" min="1" max="64" value="4">
-                    </div>
-                    <div class="ctrl">
-                        <div class="ctrl-label">Quant</div>
-                        <select id="quantize">
-                            <option value="0">Off</option>
-                            <option value="1">1/4</option>
-                            <option value="0.5">1/8</option>
-                            <option value="0.25" selected>1/16</option>
-                        </select>
                     </div>
                 </div>
                 <div class="transport-btns">
@@ -400,6 +412,14 @@
                 <div class="tb-group">
                     <span class="tb-label">Edit</span>
                     <button id="quantSel">Quantize</button>
+                    <select id="quantize" class="toolbar-select" title="Quantize grid">
+                        <option value="0">Off</option>
+                        <option value="1">1/4</option>
+                        <option value="0.5">1/8</option>
+                        <option value="0.25" selected>1/16</option>
+                    </select>
+                    <button id="undoBtn" title="Undo (Ctrl+Z)" disabled>↶ Undo</button>
+                    <button id="redoBtn" title="Redo (Ctrl+Shift+Z)" disabled>↷ Redo</button>
                     <button id="transUp">▲</button>
                     <button id="transDown">▼</button>
                 </div>
@@ -426,6 +446,12 @@
                 </div>
             </div>
 
+            <!-- VELOCITY LANE -->
+            <div class="velocity-lane">
+                <div class="vel-label">VEL</div>
+                <div class="vel-view" id="velView"><div class="vel-inner" id="velInner"></div></div>
+            </div>
+
             <!-- MIDI MONITOR -->
             <div class="monitor collapsed" id="monitor">
                 <div class="monitor-head">
@@ -449,7 +475,7 @@
             <div>SELECTED: <span class="status-val" id="stSel">0</span></div>
             <div>LOOP: <span class="status-val" id="stLoop">4 bars</span></div>
         </div>
-        <div style="font-size:9px;">v2.0 · MASCHINE-STYLE LOOP SEQUENCER · WebMIDI + WebAudio</div>
+        <div style="font-size:9px;">v2.0 · LOOP SEQUENCER · WebMIDI + WebAudio</div>
     </div>
 </div>
 
@@ -484,6 +510,8 @@ class Seq {
         this.activeId = 1;
         this.selected = new Set();
         this.tool = 'pencil';        // 'pencil' (draw) | 'eraser' (delete)
+        this.undoStack = [];
+        this.redoStack = [];
 
         this.playing = false;
         this.armed = false;
@@ -867,6 +895,7 @@ class Seq {
         });
     }
     addBars(n, copy) {
+        this.pushUndo();
         const startNew = this.loopBeats();                 // beat where appended region begins
         if (copy) {
             const srcStart = startNew - n * BEATS_BAR;      // last n bars
@@ -890,6 +919,8 @@ class Seq {
     }
     setLoopBars(n) {
         n = Math.max(1, Math.min(64, n || 1));
+        if (n === this.loopBars) return;
+        this.pushUndo();
         const newBeats = n * BEATS_BAR;
         if (newBeats < this.loopBeats()) {                  // trimming — drop/clamp notes past the new end
             this.tracks.forEach(t => {
@@ -956,8 +987,49 @@ class Seq {
             });
             inner.appendChild(el);
         });
+        this.renderVelocityLane();
     }
 
+    renderVelocityLane() {
+        const inner = document.getElementById('velInner');
+        if (!inner) return;
+        inner.style.width = (this.loopBeats() * PX_BEAT) + 'px';
+        const trk = this.active;
+        let html = '<div class="vel-baseline"></div>';
+        if (trk) {
+            const usable = 56;   // px range mapped to velocity 1..127
+            trk.notes.forEach(n => {
+                const x = n.startBeat * PX_BEAT;
+                const h = Math.max(2, (n.velocity / 127) * usable);
+                const sel = this.selected.has(n) ? ' selected' : '';
+                html += `<div class="vel-marker${sel}" data-id="${n._id}" style="left:${x}px; color:${trk.color}">` +
+                        `<div class="vel-stem" style="height:${h}px"></div>` +
+                        `<div class="vel-head" style="bottom:${h}px" title="vel ${n.velocity}"></div></div>`;
+            });
+        }
+        inner.innerHTML = html;
+        // wire velocity drag on each head
+        inner.querySelectorAll('.vel-marker').forEach(m => {
+            const n = trk.notes.find(x => x._id === m.dataset.id);
+            if (!n) return;
+            m.querySelector('.vel-head').addEventListener('mousedown', e => { e.stopPropagation(); this.dragVelocity(n, e); });
+        });
+    }
+    dragVelocity(n, ev) {
+        const before = this.snapshot();
+        let moved = false;
+        const sy = ev.clientY, ov = n.velocity, perPx = 127 / 56;
+        const move = e => {
+            moved = true;
+            n.velocity = Math.max(1, Math.min(127, Math.round(ov + (sy - e.clientY) * perPx)));
+            this.renderVelocityLane();
+        };
+        const up = () => {
+            document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up);
+            if (moved) this.commitUndo(before);
+        };
+        document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
+    }
     addNoteAt(clientX, clientY) {
         const inner = document.getElementById('rollInner');
         const rect = inner.getBoundingClientRect();
@@ -967,6 +1039,7 @@ class Seq {
         if (this.quantize > 0) startBeat = Math.round(startBeat / this.quantize) * this.quantize;
         const note = Math.max(0, Math.min(127, 127 - Math.floor(y / ROW_H)));
         const trk = this.active; if (!trk) return;
+        this.pushUndo();
         const dur = this.quantize > 0 ? this.quantize : 0.5;
         const n = { _id: 'n' + Date.now() + Math.random().toString(36).slice(2, 6),
                     note, velocity: trk.velocity, startBeat: Math.max(0, startBeat), durBeats: dur };
@@ -977,27 +1050,37 @@ class Seq {
     }
 
     dragMove(n, ev) {
+        const before = this.snapshot();
+        let moved = false;
         const sx = ev.clientX, sy = ev.clientY, ot = n.startBeat, on = n.note;
         const move = e => {
+            moved = true;
             n.startBeat = Math.max(0, Math.min(this.loopBeats() - n.durBeats, ot + (e.clientX - sx) / PX_BEAT));
             n.note = Math.max(0, Math.min(127, on - Math.round((e.clientY - sy) / ROW_H)));
             this.renderRoll();
         };
         const up = () => {
             document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up);
-            if (this.quantize > 0) n.startBeat = Math.round(n.startBeat / this.quantize) * this.quantize;
+            if (moved) {
+                if (this.quantize > 0) n.startBeat = Math.round(n.startBeat / this.quantize) * this.quantize;
+                this.commitUndo(before);
+            }
             this.renderRoll();
         };
         document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
     }
     dragResize(n, ev) {
+        const before = this.snapshot();
+        let moved = false;
         const sx = ev.clientX, od = n.durBeats;
         const move = e => {
+            moved = true;
             n.durBeats = Math.max(0.0625, Math.min(this.loopBeats() - n.startBeat, od + (e.clientX - sx) / PX_BEAT));
             this.renderRoll();
         };
         const up = () => {
             document.removeEventListener('mousemove', move); document.removeEventListener('mouseup', up);
+            if (moved) this.commitUndo(before);
             this.renderRoll();
         };
         document.addEventListener('mousemove', move); document.addEventListener('mouseup', up);
@@ -1008,22 +1091,64 @@ class Seq {
         this.renderTracks(); this.renderRoll(); this.syncTrackOptions(); this.updateStatus();
     }
     addTrack() {
+        this.pushUndo();
         const id = Math.max(0, ...this.tracks.map(t => t.id)) + 1;
         this.tracks.push(this.newTrack(id));
         this.selectTrack(id);
     }
     deleteSelected() {
-        const trk = this.active; if (!trk) return;
+        const trk = this.active; if (!trk || !this.selected.size) return;
+        this.pushUndo();
         trk.notes = trk.notes.filter(n => !this.selected.has(n));
         this.selected.clear();
         this.renderRoll(); this.renderTracks(); this.updateStatus();
     }
     eraseNote(n) {
         const trk = this.active; if (!trk) return;
+        this.pushUndo();
         trk.notes = trk.notes.filter(x => x !== n);
         this.selected.delete(n);
         this.renderRoll(); this.renderTracks(); this.updateStatus();
     }
+    // ── UNDO / REDO (invisible in-memory history) ─────────
+    snapshot() {
+        return { tracks: JSON.parse(JSON.stringify(this.tracks)), loopBars: this.loopBars, activeId: this.activeId };
+    }
+    commitUndo(snap) {
+        this.undoStack.push(snap);
+        if (this.undoStack.length > 120) this.undoStack.shift();
+        this.redoStack = [];
+        this.updateUndoButtons();
+    }
+    updateUndoButtons() {
+        const u = document.getElementById('undoBtn'), r = document.getElementById('redoBtn');
+        if (u) u.disabled = this.undoStack.length === 0;
+        if (r) r.disabled = this.redoStack.length === 0;
+    }
+    pushUndo() { this.commitUndo(this.snapshot()); }
+    restore(snap) {
+        this.tracks = JSON.parse(JSON.stringify(snap.tracks));
+        this.loopBars = snap.loopBars;
+        this.activeId = this.tracks.some(t => t.id === snap.activeId) ? snap.activeId : (this.tracks[0] && this.tracks[0].id);
+        this.selected.clear();
+        document.getElementById('loopBarsInput').value = this.loopBars;
+        this.renderTracks();
+        this.rebuildTimeline();
+        this.syncTrackOptions();
+    }
+    undo() {
+        if (!this.undoStack.length) return;
+        this.redoStack.push(this.snapshot());
+        this.restore(this.undoStack.pop());
+        this.updateUndoButtons();
+    }
+    redo() {
+        if (!this.redoStack.length) return;
+        this.undoStack.push(this.snapshot());
+        this.restore(this.redoStack.pop());
+        this.updateUndoButtons();
+    }
+
     setTool(tool) {
         this.tool = tool;
         document.getElementById('toolPencil').classList.toggle('active', tool === 'pencil');
@@ -1104,10 +1229,14 @@ class Seq {
     quantizeSelected() {
         if (this.quantize <= 0) return;
         const targets = this.selected.size ? [...this.selected] : (this.active ? this.active.notes : []);
+        if (!targets.length) return;
+        this.pushUndo();
         targets.forEach(n => n.startBeat = Math.round(n.startBeat / this.quantize) * this.quantize);
         this.renderRoll();
     }
     transpose(semi) {
+        if (!this.selected.size) return;
+        this.pushUndo();
         this.selected.forEach(n => n.note = Math.max(0, Math.min(127, n.note + semi)));
         this.renderRoll();
     }
@@ -1161,6 +1290,7 @@ class Seq {
         roll.addEventListener('scroll', () => {
             document.getElementById('rulerView').scrollLeft = roll.scrollLeft;
             document.getElementById('keysView').scrollTop = roll.scrollTop;
+            document.getElementById('velView').scrollLeft = roll.scrollLeft;
             document.getElementById('addBars').style.top = (roll.scrollTop + 8) + 'px';  // keep panel in view
         });
     }
@@ -1172,6 +1302,8 @@ class Seq {
         document.getElementById('stopBtn').onclick = () => this.stop();
         document.getElementById('addTrack').onclick = () => this.addTrack();
         document.getElementById('quantSel').onclick = () => this.quantizeSelected();
+        document.getElementById('undoBtn').onclick = () => this.undo();
+        document.getElementById('redoBtn').onclick = () => this.redo();
         document.getElementById('transUp').onclick = () => this.transpose(1);
         document.getElementById('transDown').onclick = () => this.transpose(-1);
         document.getElementById('clearMon').onclick = () => { this.monLog = []; this.renderMonitor(); };
@@ -1184,7 +1316,7 @@ class Seq {
             this.renderMonitor();
         };
         document.getElementById('clearTrack').onclick = () => {
-            if (this.active) { this.active.notes = []; this.selected.clear(); this.renderRoll(); this.renderTracks(); this.updateStatus(); }
+            if (this.active && this.active.notes.length) { this.pushUndo(); this.active.notes = []; this.selected.clear(); this.renderRoll(); this.renderTracks(); this.updateStatus(); }
         };
 
         document.getElementById('bpm').onchange = e => this.bpm = Math.max(40, Math.min(300, parseInt(e.target.value) || 120));
@@ -1218,6 +1350,9 @@ class Seq {
         // keyboard
         document.addEventListener('keydown', e => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+            const mod = e.ctrlKey || e.metaKey;
+            if (mod && e.code === 'KeyZ') { e.preventDefault(); e.shiftKey ? this.redo() : this.undo(); return; }
+            if (mod && e.code === 'KeyY') { e.preventDefault(); this.redo(); return; }
             if (e.code === 'Space') { e.preventDefault(); this.toggleTransport(); }
             else if (e.code === 'KeyR') { e.preventDefault(); this.arm(); }
             else if (e.code === 'KeyP') { e.preventDefault(); this.setTool('pencil'); }
