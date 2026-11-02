@@ -298,6 +298,56 @@
     .status-info { display: flex; gap: 20px; }
     .status-val { color: var(--accent); font-weight: 700; }
 
+    /* ════ INSTRUMENT TRACKS ════ */
+    .add-wrap { position: relative; }
+    .add-menu { position: absolute; left: 0; right: 0; top: calc(100% + 4px); z-index: 30; background: var(--bg-panel); border: 1px solid var(--border); border-radius: 6px; padding: 4px; box-shadow: 0 8px 24px rgba(0,0,0,0.5); display: flex; flex-direction: column; gap: 2px; }
+    .add-menu[hidden] { display: none; }
+    .add-menu button { flex: none; text-align: left; border-color: transparent; background: transparent; padding: 7px 9px; display: flex; flex-direction: column; gap: 1px; }
+    .add-menu button small { font-size: 9px; color: var(--text-secondary); font-weight: 400; }
+    .add-menu button:hover { background: var(--bg-lighter); border-color: var(--accent); }
+    .inst-badge { font-size: 8px; font-weight: 700; letter-spacing: 0.5px; padding: 1px 5px; border-radius: 3px; background: var(--bg-main); color: var(--text-secondary); border: 1px solid var(--border); margin-left: 6px; vertical-align: 1px; }
+    .inst-line { font-size: 11px; color: var(--text-primary); margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+    .inst-line a { color: var(--text-secondary); font-size: 9px; cursor: pointer; text-decoration: underline; }
+    .inst-panel { flex: 1; min-height: 0; overflow: auto; background: var(--bg-roll); }
+    .inst-panel[hidden], .roll-wrap[hidden], .velocity-lane[hidden], .roll-only[hidden], .ctrl-row[hidden], .tb-group[hidden] { display: none !important; }
+    .vs-busy { position: fixed; inset: 0; z-index: 100; display: grid; place-items: center; background: rgba(15,20,25,0.72); backdrop-filter: blur(2px); }
+    .vs-busy[hidden] { display: none; }
+    .vs-busy-card { background: var(--bg-panel); border: 1px solid var(--accent); border-radius: 8px; padding: 18px 26px; min-width: 320px; text-align: center; box-shadow: 0 12px 40px rgba(0,0,0,0.6); }
+    .vs-busy-t { font-size: 14px; font-weight: 600; }
+    .vs-busy-s { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-secondary); margin-top: 6px; min-height: 1.2em; }
+    .vs-busy-bar { height: 3px; background: var(--bg-control); border-radius: 2px; overflow: hidden; margin-top: 12px; }
+    .vs-busy-bar i { display: block; height: 100%; width: 30%; background: var(--accent); animation: vsbusy 1s ease-in-out infinite alternate; }
+    @keyframes vsbusy { from { margin-left: 0; } to { margin-left: 70%; } }
+    .vs-toast { position: fixed; left: 50%; bottom: 46px; transform: translateX(-50%); background: var(--bg-lighter); border: 1px solid var(--accent); color: var(--text-primary); padding: 8px 14px; border-radius: 6px; font-size: 12px; z-index: 101; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+    .vs-toast.show { opacity: 1; }
+    @media (prefers-reduced-motion: reduce) { .vs-busy-bar i { animation: none; width: 100%; } }
+
+    /* ════ SETTINGS ════ */
+    .settings-btn { flex: none; padding: 6px 12px; font-size: 11px; }
+    .vs-modal { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; background: rgba(15,20,25,0.7); }
+    .vs-modal[hidden] { display: none; }
+    .vs-modal-card { background: var(--bg-panel); border: 1px solid var(--border); border-radius: 10px; width: min(520px, 92vw); max-height: 86vh; overflow: auto; box-shadow: 0 16px 48px rgba(0,0,0,0.6); }
+    .vs-modal-head { display: flex; align-items: center; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--border-soft); }
+    .vs-modal-head h2 { font-size: 14px; font-weight: 700; }
+    .vs-modal-head button { flex: none; padding: 4px 10px; }
+    .vs-modal-body { padding: 14px 18px 18px; }
+    .set-title { font-size: 10px; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; font-weight: 700; margin-bottom: 4px; }
+    .set-help { font-size: 11px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5; }
+    .set-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border-soft); }
+    .set-row:last-child { border-bottom: 0; }
+    .set-meta { flex: 1; min-width: 0; }
+    .set-name { font-size: 12px; font-weight: 600; }
+    .set-hint { font-size: 10px; color: var(--text-secondary); margin-top: 2px; }
+    .set-use { font-size: 10px; color: var(--warning); margin-top: 2px; }
+    .switch { flex: none; position: relative; width: 38px; height: 22px; padding: 0; border-radius: 11px; background: var(--bg-control); border: 1px solid var(--border); }
+    .switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 50%; background: var(--text-secondary); transition: left 0.15s, background 0.15s; }
+    .switch[aria-checked="true"] { background: var(--accent); border-color: var(--accent); }
+    .switch[aria-checked="true"]::after { left: 18px; background: #fff; }
+    .switch:disabled { opacity: 0.5; }
+    .switch:hover { background: var(--bg-lighter); }
+    .switch[aria-checked="true"]:hover { background: var(--accent-alt); }
+    @media (prefers-reduced-motion: reduce) { .switch::after { transition: none; } }
+
     ::-webkit-scrollbar { width: 12px; height: 12px; }
     ::-webkit-scrollbar-track { background: var(--bg-panel); }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
@@ -310,6 +360,7 @@
     <div class="header" id="header">
         <h1><span>◆</span> VoltaSeq</h1>
         <div class="header-right">
+            <button class="settings-btn" id="settingsBtn" aria-haspopup="dialog">⚙ Settings</button>
             <div class="midi-status" id="midiStatus">
                 <span class="midi-activity" id="midiActivity"></span>
                 <span class="status-dot" id="statusDot"></span>
@@ -348,7 +399,7 @@
                 </div>
                 <div class="toggle-row">
                     <input type="checkbox" id="audioPreview" checked>
-                    <label for="audioPreview">Audio preview (synth)</label>
+                    <label for="audioPreview" title="Plays in the browser only for tracks without a MIDI output; tracks with a device are heard on the device">Audio preview (no device)</label>
                 </div>
             </div>
 
@@ -367,12 +418,14 @@
 
             <div class="section">
                 <div class="section-title">Tracks</div>
-                <div class="btn-row"><button id="addTrack">+ ADD TRACK</button></div>
+                <div class="btn-row add-wrap"><button id="addTrack" aria-haspopup="true" aria-expanded="false">+ ADD TRACK</button>
+                    <div class="add-menu" id="addMenu" hidden role="menu"></div></div>
                 <div class="tracks-list" id="tracksList"></div>
             </div>
 
             <div class="section">
                 <div class="section-title">Track Options</div>
+                <div class="inst-line"><span id="trkInstName">MIDI (generic)</span><a id="trkAdvanced" hidden>show channel</a></div>
                 <div class="ctrl">
                     <div class="ctrl-label">MIDI Input</div>
                     <select id="trkInput"><option value="">Omni (All)</option></select>
@@ -381,7 +434,7 @@
                     <div class="ctrl-label">MIDI Output</div>
                     <select id="trkOutput"><option value="">None (synth only)</option></select>
                 </div>
-                <div class="ctrl-row">
+                <div class="ctrl-row" id="trkChanRow">
                     <div class="ctrl">
                         <div class="ctrl-label">Channel</div>
                         <input type="number" id="trkChannel" min="1" max="16" value="1">
@@ -398,7 +451,7 @@
         <div class="editor">
             <div class="toolbar">
                 <div class="pos-display" id="posDisplay">1 : 1</div>
-                <div class="tb-group">
+                <div class="tb-group roll-only">
                     <span class="tb-label">Tool</span>
                     <div class="tool-select">
                         <button class="tool-btn active" id="toolPencil" title="Pencil — draw notes (P)">
@@ -409,7 +462,7 @@
                         </button>
                     </div>
                 </div>
-                <div class="tb-group">
+                <div class="tb-group roll-only">
                     <span class="tb-label">Edit</span>
                     <button id="quantSel">Quantize</button>
                     <select id="quantize" class="toolbar-select" title="Quantize grid">
@@ -418,10 +471,16 @@
                         <option value="0.5">1/8</option>
                         <option value="0.25" selected>1/16</option>
                     </select>
-                    <button id="undoBtn" title="Undo (Ctrl+Z)" disabled>↶ Undo</button>
-                    <button id="redoBtn" title="Redo (Ctrl+Shift+Z)" disabled>↷ Redo</button>
                     <button id="transUp">▲</button>
                     <button id="transDown">▼</button>
+                </div>
+                <div class="tb-group" id="viewSwitch" hidden>
+                    <span class="tb-label">View</span>
+                    <div class="tool-select"><button class="tool-btn view-btn" data-v="notes" style="width:auto;padding:0 12px">Notes</button><button class="tool-btn view-btn" data-v="sound" style="width:auto;padding:0 12px">Sound</button></div>
+                </div>
+                <div class="tb-group">
+                    <button id="undoBtn" title="Undo (Ctrl+Z)" disabled>↶ Undo</button>
+                    <button id="redoBtn" title="Redo (Ctrl+Shift+Z)" disabled>↷ Redo</button>
                 </div>
                 <div style="flex:1"></div>
                 <div class="tb-group">
@@ -432,7 +491,8 @@
                 <input type="file" id="projectFile" accept=".zip" style="display:none">
             </div>
 
-            <div class="roll-wrap">
+            <div class="inst-panel" id="instPanel" hidden></div>
+            <div class="roll-wrap" id="rollWrap">
                 <div class="keys-view" id="keysView"><div class="keys-inner" id="keysInner"></div></div>
                 <div class="roll-col">
                     <div class="ruler-view" id="rulerView"><div class="ruler-inner" id="rulerInner"></div></div>
@@ -447,7 +507,7 @@
             </div>
 
             <!-- VELOCITY LANE -->
-            <div class="velocity-lane">
+            <div class="velocity-lane" id="velLane">
                 <div class="vel-label">VEL</div>
                 <div class="vel-view" id="velView"><div class="vel-inner" id="velInner"></div></div>
             </div>
@@ -475,10 +535,22 @@
             <div>SELECTED: <span class="status-val" id="stSel">0</span></div>
             <div>LOOP: <span class="status-val" id="stLoop">4 bars</span></div>
         </div>
-        <div style="font-size:9px;">VoltaSeq v2.0 · WebMIDI + WebAudio</div>
+        <div style="font-size:9px;">VoltaSeq v2.3 · WebMIDI + WebAudio · instrument tracks</div>
     </div>
 </div>
 
+<div class="vs-busy" id="vsBusy" hidden><div class="vs-busy-card" role="status" aria-live="assertive"><div class="vs-busy-t" id="vsBusyT"></div><div class="vs-busy-s" id="vsBusyS"></div><div class="vs-busy-bar"><i></i></div></div></div>
+<div class="vs-toast" id="vsToast" role="status"></div>
+<div class="vs-modal" id="settingsModal" hidden>
+    <div class="vs-modal-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+        <div class="vs-modal-head"><h2 id="settingsTitle">Settings</h2><button id="settingsClose" aria-label="Close settings">✕</button></div>
+        <div class="vs-modal-body">
+            <div class="set-title">Instruments</div>
+            <div class="set-help">Choose which instruments appear under + ADD TRACK. Turning one off only hides it from the menu: tracks and projects that already use it keep working.</div>
+            <div id="settingsInst"></div>
+        </div>
+    </div>
+</div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" onerror="console.warn('JSZip not loaded')"></script>
 <script>
 // ════════════════════════════════════════════════════════════════════════
@@ -492,6 +564,32 @@ const PICO8 = ['#1D2B53','#7E2553','#008751','#AB5236','#5F574F','#C2C3C7','#FFF
                '#FF004D','#FFA300','#FFEC27','#00E436','#29ADFF','#83769C','#FF77A8','#FFCCAA'];
 const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const noteName = n => NOTE_NAMES[n % 12] + (Math.floor(n / 12) - 1);
+const escHtml = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+// ── INSTRUMENTS ────────────────────────────────────────────────────────
+// Each track belongs to an instrument. "midi" is built in; the others are
+// separate files in instruments/, loaded the first time a track needs them.
+const INSTRUMENT_CATALOG = [
+    { id: 'midi', name: 'MIDI (generic)', hint: 'Piano roll, any MIDI device', file: null },
+    { id: 'td3',  name: 'Behringer TD-3', hint: 'Step sequencer, generator, pattern library', file: 'instruments/td3.js' },
+    { id: 'volca', name: 'KORG volca sample 2', hint: '10-part drum grid, part sounds, sample manager', file: 'instruments/volca.js' },
+    { id: 'craft', name: 'Modal CRAFTsynth 2.0', hint: 'Piano roll plus full sound editor and patch library', file: 'instruments/craft.js' },
+    { id: 'microfreak', name: 'Arturia MicroFreak', hint: 'Piano roll plus sound editor and preset recall', file: 'instruments/microfreak.js' },
+];
+window.VoltaInstruments = window.VoltaInstruments || {};
+VoltaInstruments.midi = { id: 'midi', name: 'MIDI (generic)', short: 'MIDI', editor: 'roll', hideChannel: false };
+function loadInstrument(id) {
+    if (VoltaInstruments[id]) return Promise.resolve(VoltaInstruments[id]);
+    const entry = INSTRUMENT_CATALOG.find(c => c.id === id);
+    if (!entry || !entry.file) return Promise.reject(new Error('Unknown instrument: ' + id));
+    return new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = entry.file;
+        s.onload = () => VoltaInstruments[id] ? res(VoltaInstruments[id]) : rej(new Error(entry.file + ' did not register'));
+        s.onerror = () => rej(new Error('Could not load ' + entry.file));
+        document.head.appendChild(s);
+    });
+}
 
 class Seq {
     constructor() {
@@ -525,6 +623,12 @@ class Seq {
         this.lastMetroBeat = -1;
 
         this.monLog = [];
+        this.sysex = false;               // SysEx access is requested only when an instrument needs it
+        this.sysexHandlers = new Set();
+        this.midiHandlers = new Set();     // channel messages for instruments (e.g. knob moves on a synth)
+        this.showChannel = false;
+        this.enabledInst = this.loadEnabledInstruments();
+        this._mounted = null;             // { track, profile } shown in the instrument panel
         this.audio = null;
         this.master = null;
 
@@ -541,10 +645,22 @@ class Seq {
         this.updateStatus();
     }
 
-    newTrack(id) {
-        return { id, name: 'Track ' + id, notes: [], inputId: null, outputId: null,
+    newTrack(id, instrument = 'midi') {
+        return { id, name: 'Track ' + id, instrument, inst: {}, notes: [], inputId: null, outputId: null,
                  channel: 0, velocity: 100, muted: false, color: this.dealColor() };
     }
+    prof(trk) { return (trk && VoltaInstruments[trk.instrument]) || VoltaInstruments.midi; }
+    hasDevice(trk) { return !!(trk && trk.outputId && this.outputs.has(trk.outputId)); }
+    // Hear a single note while editing: on the track's device if it has one, otherwise in the browser
+    previewNote(trk, note, velocity, durSec = 0.2) {
+        if (this.hasDevice(trk)) {
+            const ch = trk.channel & 0x0F;
+            this.sendOut(trk, [0x90 | ch, note, velocity]);
+            this.seqEcho.set(note + '-' + ch, performance.now() + durSec * 1000 + 120);
+            setTimeout(() => this.sendOut(trk, [0x80 | ch, note, 0]), durSec * 1000);
+        } else this.synth(note, velocity, durSec);
+    }
+    newNoteId() { return 'n' + Date.now() + Math.random().toString(36).slice(2, 6); }
     dealColor() {
         // shuffled bag: deal each color once, reshuffle only when the palette is exhausted
         if (!this.colorBag || this.colorBag.length === 0) {
@@ -624,7 +740,16 @@ class Seq {
         this.setMidiStatus(true);
     }
     onMIDI(event, inputId) {
-        const [status, d1, d2] = event.data;
+        const data = event.data;
+        if (data[0] === 0xF8 || data[0] === 0xFE) return;             // clock / active sensing: ignore
+        if (data[0] === 0xF0) {                                       // SysEx: hand to instruments
+            this.blinkActivity();
+            this.logSysex(data);
+            this.sysexHandlers.forEach(h => { try { h(data, inputId); } catch (e) { console.error(e); } });
+            return;
+        }
+        const [status, d1, d2] = data;
+        this.midiHandlers.forEach(h => { try { h(data, inputId); } catch (e) { console.error(e); } });
         const cmd = status >> 4;
         const ch = status & 0x0F;
 
@@ -641,7 +766,7 @@ class Seq {
         if (!(this.playing && this.armed)) return;   // record only while playing + armed
 
         // echo suppression: never record what the sequencer itself just played out
-        const echoExp = this.seqEcho.get(d1);
+        const echoExp = this.seqEcho.get(d1 + '-' + ch);
         if (echoExp && performance.now() <= echoExp) return;
 
         const beat = this.currentBeat();
@@ -663,6 +788,55 @@ class Seq {
         trk.notes.push({ _id: 'n' + Date.now() + Math.random().toString(36).slice(2, 6),
                          note: on.note, velocity: on.vel, startBeat: start % this.loopBeats(), durBeats: dur });
         this.renderRoll(); this.renderTracks(); this.updateStatus();
+    }
+
+    async ensureSysex() {
+        if (this.sysex) return true;
+        if (!navigator.requestMIDIAccess) return false;
+        try {
+            this.midi = await navigator.requestMIDIAccess({ sysex: true });
+            this.sysex = true;
+            this.scanDevices();
+            this.midi.onstatechange = () => this.scanDevices();
+            return true;
+        } catch (e) { this.toast('SysEx access was blocked. Allow it in the browser site settings.'); return false; }
+    }
+    onSysex(fn) { this.sysexHandlers.add(fn); return () => this.sysexHandlers.delete(fn); }
+    onMidi(fn) { this.midiHandlers.add(fn); return () => this.midiHandlers.delete(fn); }
+    logSysex(data) {
+        const now = new Date();
+        const ts = now.toTimeString().slice(0, 8) + '.' + String(now.getMilliseconds()).padStart(3, '0');
+        const raw = Array.from(data.slice(0, 10), b => b.toString(16).toUpperCase().padStart(2, '0')).join(' ') + (data.length > 10 ? ' …' : '');
+        this.monLog.push({ ts, type: 'SYSEX', cls: 'other', ch: '-', data: data.length + ' bytes', raw });
+        if (this.monLog.length > 100) this.monLog.shift();
+        this.renderMonitor();
+    }
+    toast(msg) {
+        const t = document.getElementById('vsToast'); t.textContent = msg; t.classList.add('show');
+        clearTimeout(this._toastT); this._toastT = setTimeout(() => t.classList.remove('show'), 2600);
+    }
+    // Overlay for device operations; stays at least 2 s so it is always readable.
+    busy(title) {
+        const id = (this._busyId = (this._busyId || 0) + 1), t0 = performance.now();
+        const box = document.getElementById('vsBusy');
+        document.getElementById('vsBusyT').textContent = title;
+        document.getElementById('vsBusyS').textContent = '';
+        box.hidden = false;
+        return {
+            sub: s => { if (id === this._busyId) document.getElementById('vsBusyS').textContent = s; },
+            done: async final => {
+                const rest = 2000 - (performance.now() - t0);
+                if (rest > 0) await new Promise(r => setTimeout(r, rest));
+                if (id !== this._busyId) return;
+                if (final) { document.getElementById('vsBusyT').textContent = final; document.getElementById('vsBusyS').textContent = ''; await new Promise(r => setTimeout(r, 600)); }
+                if (id === this._busyId) box.hidden = true;
+            }
+        };
+    }
+    download(name, bytesOrText, type = 'application/octet-stream') {
+        const blob = new Blob([typeof bytesOrText === 'string' ? bytesOrText : new Uint8Array(bytesOrText)], { type });
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+        document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
     }
 
     sendOut(trk, bytes) {
@@ -718,7 +892,8 @@ class Seq {
     }
     play() {
         if (this.playing || this.precounting) return;
-        if (this.audio && this.audio.state === 'suspended') this.audio.resume();
+        if (!this.audio) { this.toast('No audio engine — transport needs WebAudio'); return; }
+        if (this.audio.state === 'suspended') this.audio.resume();
         document.getElementById('playBtn').classList.add('playing');
         if (this.armed && this.precount) this.startPrecount();
         else this.startTransport();
@@ -745,7 +920,7 @@ class Seq {
     startTransport() {
         this.playing = true;
         this.startTime = this.audio.currentTime;
-        this.lastBeat = 0;
+        this.lastBeat = -1;             // -1 so notes exactly on beat 0 fire on the first pass
         this.lastMetroBeat = -1;
         document.getElementById('playhead').classList.add('active');
         this.updateRecVisual();
@@ -818,6 +993,8 @@ class Seq {
         }
     }
     fire(trk, n) {
+        const p = this.prof(trk);
+        if (p.silent && p.silent(trk, this)) return;                  // e.g. the device plays its own pattern
         const durSec = n.durBeats * this.secPerBeat();
         // visual flash
         const el = document.querySelector(`[data-id="${n._id}"]`);
@@ -825,13 +1002,16 @@ class Seq {
             el.classList.add('playing');
             setTimeout(() => el.classList.remove('playing'), Math.min(durSec * 1000, 600));
         }
-        // synth preview
-        this.synth(n.note, n.velocity, durSec);
+        // browser preview only when the track has no device to play it (instruments can bring their own voice)
+        if (!this.hasDevice(trk)) {
+            if (p.synth) { if (this.audio && this.audioPreview) p.synth(this, n, durSec); }
+            else this.synth(n.note, n.velocity, durSec);
+        }
         // MIDI out — register echo guard so the loopback isn't recorded
         if (trk.outputId) {
-            const ch = trk.channel & 0x0F;
+            const ch = (n.ch != null ? n.ch : trk.channel) & 0x0F;
             this.sendOut(trk, [0x90 | ch, n.note, n.velocity]);
-            this.seqEcho.set(n.note, performance.now() + durSec * 1000 + 120);
+            this.seqEcho.set(n.note + '-' + ch, performance.now() + durSec * 1000 + 120);
             setTimeout(() => this.sendOut(trk, [0x80 | ch, n.note, 0]), durSec * 1000);
         }
     }
@@ -933,7 +1113,9 @@ class Seq {
         this.rebuildTimeline();
     }
     rebuildTimeline() {
+        this.tracks.forEach(t => { const p = this.prof(t); if (p.onTimeline) p.onTimeline(t, this); });
         this.buildRuler(); this.sizeRoll(); this.renderRoll(); this.renderAddBars(); this.updateStatus();
+        this.mountEditor();
     }
 
     renderTracks() {
@@ -944,8 +1126,8 @@ class Seq {
             item.className = 'track-item' + (trk.id === this.activeId ? ' active' : '');
             item.innerHTML =
                 `<div class="track-color" style="background:${trk.color}"></div>` +
-                `<div class="track-meta"><div class="track-name">${trk.name}</div>` +
-                `<div class="track-info">${trk.notes.length} notes · ch${trk.channel + 1}</div></div>` +
+                `<div class="track-meta"><div class="track-name">${escHtml(trk.name)}<span class="inst-badge">${escHtml(this.prof(trk).short)}</span></div>` +
+                `<div class="track-info">${this.prof(trk).trackInfo ? this.prof(trk).trackInfo(trk, this) : trk.notes.length + ' notes · ch' + (trk.channel + 1)}</div></div>` +
                 `<button class="track-mute ${trk.muted ? 'muted' : ''}">M</button>`;
             item.addEventListener('click', e => {
                 if (e.target.classList.contains('track-mute')) { trk.muted = !trk.muted; this.renderTracks(); return; }
@@ -1045,7 +1227,7 @@ class Seq {
                     note, velocity: trk.velocity, startBeat: Math.max(0, startBeat), durBeats: dur };
         trk.notes.push(n);
         this.selected.clear(); this.selected.add(n);
-        this.synth(note, trk.velocity, 0.2);
+        this.previewNote(trk, note, trk.velocity, 0.2);
         this.renderRoll(); this.renderTracks(); this.updateStatus();
     }
 
@@ -1089,12 +1271,88 @@ class Seq {
     selectTrack(id) {
         this.activeId = id; this.selected.clear();
         this.renderTracks(); this.renderRoll(); this.syncTrackOptions(); this.updateStatus();
+        this.mountEditor();
     }
-    addTrack() {
+    async addTrack(instrument = 'midi') {
+        let p;
+        try { p = await loadInstrument(instrument); }
+        catch (e) { this.toast(e.message); return; }
         this.pushUndo();
         const id = Math.max(0, ...this.tracks.map(t => t.id)) + 1;
-        this.tracks.push(this.newTrack(id));
+        const trk = this.newTrack(id, instrument);
+        if (p.create) p.create(trk, this);
+        if (p.portMatch && !trk.outputId) {                       // pick the instrument's port if it's plugged in
+            for (const [oid, out] of this.outputs) if (p.portMatch.test(out.name || '')) { trk.outputId = oid; break; }
+        }
+        this.tracks.push(trk);
         this.selectTrack(id);
+    }
+    // Show the piano roll, or the instrument's own editor, for the active track.
+    mountEditor() {
+        const trk = this.active, p = this.prof(trk);
+        const both = p.editor === 'both', custom = p.editor === 'custom' || (both && trk.view === 'sound');
+        const vs = document.getElementById('viewSwitch');
+        vs.hidden = !both;
+        vs.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', (trk.view || 'notes') === b.dataset.v));
+        const panel = document.getElementById('instPanel');
+        document.getElementById('rollWrap').hidden = custom;
+        document.getElementById('velLane').hidden = custom;
+        document.querySelectorAll('.roll-only').forEach(el => el.hidden = custom);
+        panel.hidden = !custom;
+        const m = this._mounted;
+        if (m && (!custom || m.track !== trk)) { if (m.profile.unmount) m.profile.unmount(this); panel.innerHTML = ''; this._mounted = null; }
+        if (m && this._mounted && this._mounted.profile !== p) { if (m.profile.unmount) m.profile.unmount(this); panel.innerHTML = ''; this._mounted = null; }
+        if (custom && !this._mounted) { p.mount(panel, trk, this); this._mounted = { track: trk, profile: p }; }
+        else if (custom && p.refresh) p.refresh(trk, this);
+    }
+    // ── SETTINGS: which instruments are offered ───────────
+    loadEnabledInstruments() {
+        try {
+            const v = JSON.parse(localStorage.getItem('voltaseq-instruments'));
+            if (Array.isArray(v)) return new Set(['midi', ...v]);
+        } catch (e) {}
+        return new Set(INSTRUMENT_CATALOG.map(c => c.id));
+    }
+    saveEnabledInstruments() {
+        try { localStorage.setItem('voltaseq-instruments', JSON.stringify([...this.enabledInst])); } catch (e) {}
+    }
+    openSettings() {
+        const host = document.getElementById('settingsInst');
+        host.innerHTML = '';
+        INSTRUMENT_CATALOG.forEach(c => {
+            const inUse = this.tracks.filter(t => t.instrument === c.id).length, on = this.enabledInst.has(c.id), fixed = c.id === 'midi';
+            const row = document.createElement('div'); row.className = 'set-row';
+            row.innerHTML = `<div class="set-meta"><div class="set-name"></div><div class="set-hint"></div>${inUse && !on ? '<div class="set-use"></div>' : ''}</div><button class="switch" role="switch"></button>`;
+            row.querySelector('.set-name').textContent = c.name;
+            row.querySelector('.set-hint').textContent = fixed ? 'Always available' : c.hint;
+            if (inUse && !on) row.querySelector('.set-use').textContent = `Hidden from the menu · ${inUse} track${inUse > 1 ? 's' : ''} in this project still use${inUse > 1 ? '' : 's'} it`;
+            const sw = row.querySelector('.switch');
+            sw.setAttribute('aria-checked', on); sw.setAttribute('aria-label', c.name); sw.disabled = fixed;
+            sw.onclick = () => { if (this.enabledInst.has(c.id)) this.enabledInst.delete(c.id); else this.enabledInst.add(c.id); this.saveEnabledInstruments(); this.openSettings(); };
+            host.appendChild(row);
+        });
+        const m = document.getElementById('settingsModal');
+        if (m.hidden) { m.hidden = false; this._settingsReturn = document.activeElement; document.getElementById('settingsClose').focus(); }
+    }
+    closeSettings() {
+        document.getElementById('settingsModal').hidden = true;
+        if (this._settingsReturn) this._settingsReturn.focus();
+    }
+    toggleAddMenu(show) {
+        const menu = document.getElementById('addMenu'), btn = document.getElementById('addTrack');
+        const open = show != null ? show : menu.hidden;
+        menu.hidden = !open; btn.setAttribute('aria-expanded', open);
+        if (open) {
+            menu.innerHTML = '';
+            INSTRUMENT_CATALOG.filter(c => c.id === 'midi' || this.enabledInst.has(c.id)).forEach(c => {
+                const b = document.createElement('button');
+                b.setAttribute('role', 'menuitem');
+                b.innerHTML = `<span></span><small></small>`;
+                b.children[0].textContent = c.name; b.children[1].textContent = c.hint;
+                b.onclick = () => { this.toggleAddMenu(false); this.addTrack(c.id); };
+                menu.appendChild(b);
+            });
+        }
     }
     deleteSelected() {
         const trk = this.active; if (!trk || !this.selected.size) return;
@@ -1165,6 +1423,7 @@ class Seq {
             bpm: this.bpm, loopBars: this.loopBars, quantize: this.quantize, activeId: this.activeId,
             tracks: this.tracks.map(t => ({
                 id: t.id, name: t.name, color: t.color, channel: t.channel,
+                instrument: t.instrument || 'midi', inst: t.inst || {}, view: t.view || null,
                 velocity: t.velocity, muted: t.muted, inputId: t.inputId, outputId: t.outputId,
                 notes: t.notes.map(n => ({ note: n.note, velocity: n.velocity, startBeat: n.startBeat, durBeats: n.durBeats }))
             }))
@@ -1187,6 +1446,9 @@ class Seq {
             const entry = zip.file('project.json');
             if (!entry) { alert('Invalid project: project.json not found in the zip.'); return; }
             const data = JSON.parse(await entry.async('string'));
+            for (const t of (data.tracks || [])) {
+                if (t.instrument && t.instrument !== 'midi') await loadInstrument(t.instrument);
+            }
 
             this.stop();
             this.bpm = data.bpm || 120;
@@ -1195,6 +1457,9 @@ class Seq {
             this.colorBag = [];
             this.tracks = (data.tracks || []).map(t => ({
                 id: t.id,
+                instrument: t.instrument || 'midi',
+                inst: t.inst || {},
+                view: t.view || null,
                 name: t.name || ('Track ' + t.id),
                 color: t.color || this.dealColor(),
                 channel: t.channel || 0,
@@ -1210,6 +1475,7 @@ class Seq {
             if (!this.tracks.length) this.tracks = [this.newTrack(1)];
             this.activeId = (data.activeId && this.tracks.some(t => t.id === data.activeId)) ? data.activeId : this.tracks[0].id;
             this.selected.clear();
+            this.undoStack = []; this.redoStack = []; this.updateUndoButtons();   // fresh project: drop the old history
 
             // sync UI controls
             document.getElementById('bpm').value = this.bpm;
@@ -1217,6 +1483,7 @@ class Seq {
             document.getElementById('quantize').value = String(this.quantize);
 
             // rebuild everything
+            this.tracks.forEach(t => { const p = this.prof(t); if (p.onLoad) p.onLoad(t, this); });
             this.fillDeviceSelects();
             this.renderTracks();
             this.rebuildTimeline();
@@ -1259,6 +1526,12 @@ class Seq {
     }
     syncTrackOptions() {
         const trk = this.active; if (!trk) return;
+        const p = this.prof(trk), hide = !!p.hideChannel && !this.showChannel;
+        document.getElementById('trkInstName').textContent = p.name;
+        const adv = document.getElementById('trkAdvanced');
+        adv.hidden = !p.hideChannel;
+        adv.textContent = this.showChannel ? 'hide channel' : 'show channel';
+        document.getElementById('trkChanRow').hidden = hide;
         document.getElementById('trkInput').value = trk.inputId || '';
         document.getElementById('trkOutput').value = trk.outputId || '';
         document.getElementById('trkChannel').value = trk.channel + 1;
@@ -1300,7 +1573,14 @@ class Seq {
         document.getElementById('recBtn').onclick = () => this.arm();
         document.getElementById('playBtn').onclick = () => this.play();
         document.getElementById('stopBtn').onclick = () => this.stop();
-        document.getElementById('addTrack').onclick = () => this.addTrack();
+        document.getElementById('addTrack').onclick = e => { e.stopPropagation(); this.toggleAddMenu(); };
+        document.addEventListener('click', e => { if (!e.target.closest('.add-wrap')) this.toggleAddMenu(false); });
+        document.getElementById('settingsBtn').onclick = () => this.openSettings();
+        document.getElementById('settingsClose').onclick = () => this.closeSettings();
+        document.getElementById('settingsModal').addEventListener('click', e => { if (e.target.id === 'settingsModal') this.closeSettings(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape' && !document.getElementById('settingsModal').hidden) this.closeSettings(); });
+        document.getElementById('trkAdvanced').onclick = () => { this.showChannel = !this.showChannel; this.syncTrackOptions(); };
+        document.querySelectorAll('#viewSwitch .view-btn').forEach(b => b.onclick = () => { if (this.active) { this.active.view = b.dataset.v; this.mountEditor(); } });
         document.getElementById('quantSel').onclick = () => this.quantizeSelected();
         document.getElementById('undoBtn').onclick = () => this.undo();
         document.getElementById('redoBtn').onclick = () => this.redo();
@@ -1327,7 +1607,7 @@ class Seq {
         document.getElementById('precount').onchange = e => this.precount = e.target.checked;
 
         document.getElementById('trkInput').onchange = e => { if (this.active) this.active.inputId = e.target.value || null; };
-        document.getElementById('trkOutput').onchange = e => { if (this.active) this.active.outputId = e.target.value || null; };
+        document.getElementById('trkOutput').onchange = e => { if (this.active) { this.active.outputId = e.target.value || null; const p = this.prof(this.active); if (p.onPortChange) p.onPortChange(this.active, this); } };
         document.getElementById('trkChannel').onchange = e => { if (this.active) this.active.channel = (parseInt(e.target.value) || 1) - 1; this.renderTracks(); };
         document.getElementById('trkVel').onchange = e => { if (this.active) this.active.velocity = Math.max(1, Math.min(127, parseInt(e.target.value) || 100)); };
 
@@ -1350,6 +1630,8 @@ class Seq {
         // keyboard
         document.addEventListener('keydown', e => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+            if (!document.getElementById('settingsModal').hidden) return;
+            if (!document.getElementById('instPanel').hidden && (e.code === 'Delete' || e.code === 'Backspace')) return;
             const mod = e.ctrlKey || e.metaKey;
             if (mod && e.code === 'KeyZ') { e.preventDefault(); e.shiftKey ? this.redo() : this.undo(); return; }
             if (mod && e.code === 'KeyY') { e.preventDefault(); this.redo(); return; }
