@@ -530,6 +530,30 @@
     .ctx-menu button.danger:hover { background: var(--rec); color: #fff; }
     .ctx-menu hr { border: 0; border-top: 1px solid var(--border); margin: var(--space-1) 0; }
     #deleteTrack { width: 100%; }
+
+    /* ════ LAYOUT: top bar · tracks | editor · track details | transport ════ */
+    .header h1 { margin-right: auto; }
+    .header-right { flex: 1; justify-content: flex-end; }
+    .file-btns { display: flex; gap: var(--space-2); margin-right: auto; margin-left: var(--space-6, 16px); }
+    .file-btns button, .settings-btn { flex: none; }
+    .sidebar { width: 236px; min-width: 236px; }
+    .tracks-section { border-bottom: 0; }
+    .tracks-list { margin-top: 0; }
+    .add-track-row {
+        width: 100%; justify-content: flex-start; height: var(--list-row-h); margin-top: var(--space-2);
+        background: transparent; border: 1px dashed var(--border); border-radius: 0; color: var(--text-secondary); font-weight: 400;
+    }
+    .add-track-row:hover { background: rgba(255,255,255,0.04); color: var(--text-primary); border: 1px dashed var(--text-secondary); }
+    .add-menu { top: calc(100% + 2px); }
+    .bottom-row { display: grid; grid-template-columns: 1fr 1fr; flex: none; background: var(--canvas); border-top: 1px solid var(--border); }
+    .bottom-row .section { border-bottom: 0; padding: var(--space-4) var(--space-5); }
+    .bottom-row .panel-details { border-right: 1px solid var(--border); }
+    .details-grid { display: grid; grid-template-columns: 1fr 1fr; gap: var(--space-5); align-items: start; }
+    .details-col .ctrl:last-child, .details-col .ctrl-row:last-child { margin-bottom: 0; }
+    .panel-transport .transport-btns { margin-top: var(--space-4); }
+    .panel-transport .toggle-row:first-of-type { margin-top: var(--space-4); }
+    .panel-details .btn-row { margin-top: var(--space-4); }
+    @media (max-width: 1100px) { .details-grid { grid-template-columns: 1fr; gap: var(--space-3); } }
     @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
     ::-webkit-scrollbar { width: 12px; height: 12px; }
@@ -544,6 +568,7 @@
     <div class="header" id="header">
         <h1><svg class="logo" viewBox="0 0 10 10" aria-hidden="true"><rect x="2.2" y="2.2" width="5.6" height="5.6" transform="rotate(45 5 5)"/></svg>VoltaSeq</h1>
         <div class="header-right">
+            <div class="file-btns"><button id="saveBtn">Save</button><button id="loadBtn">Load</button></div>
             <button class="settings-btn" id="settingsBtn" aria-haspopup="dialog">Settings</button>
             <div class="midi-status" id="midiStatus">
                 <span class="midi-activity" id="midiActivity"></span>
@@ -556,79 +581,11 @@
     <div class="main">
         <!-- SIDEBAR -->
         <div class="sidebar">
-            <div class="section">
-                <div class="section-title">Transport</div>
-                <div class="ctrl-row">
-                    <div class="ctrl">
-                        <div class="ctrl-label">BPM</div>
-                        <input type="number" id="bpm" min="40" max="300" value="120">
-                    </div>
-                    <div class="ctrl">
-                        <div class="ctrl-label">Loop (bars)</div>
-                        <input type="number" id="loopBarsInput" min="1" max="64" value="4">
-                    </div>
-                </div>
-                <div class="transport-btns">
-                    <button id="recBtn"><svg class="g" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4"/></svg>Rec</button>
-                    <button id="playBtn"><svg class="g" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1l7 4-7 4z"/></svg>Play</button>
-                    <button id="stopBtn"><svg class="g" viewBox="0 0 10 10" aria-hidden="true"><rect x="1.5" y="1.5" width="7" height="7"/></svg>Stop</button>
-                </div>
-                <div class="toggle-row">
-                    <input type="checkbox" id="precount">
-                    <label for="precount">Pre-count (1 bar before rec)</label>
-                </div>
-                <div class="toggle-row">
-                    <input type="checkbox" id="metronome">
-                    <label for="metronome">Metronome</label>
-                </div>
-                <div class="toggle-row">
-                    <input type="checkbox" id="audioPreview" checked>
-                    <label for="audioPreview" title="Plays in the browser only for tracks without a MIDI output; tracks with a device are heard on the device">Audio preview (no device)</label>
-                </div>
-            </div>
-
-            <div class="section">
-                <div class="section-title">Recording</div>
-                <div class="ctrl">
-                    <div class="ctrl-label">Record Channel</div>
-                    <select id="recChannel">
-                        <option value="0">All Channels (Omni)</option>
-                    </select>
-                </div>
-                <div style="font-size:9px; color:var(--text-secondary); line-height:1.5;">
-                    Arm <b style="color:var(--danger)">Rec</b>, then <b style="color:var(--success)">Play</b> (or <b>Space</b>). Notes record live into the active track, looped.
-                </div>
-            </div>
-
-            <div class="section">
+            <div class="section tracks-section">
                 <div class="section-title">Tracks</div>
-                <div class="btn-row add-wrap"><button id="addTrack" aria-haspopup="true" aria-expanded="false">Add Track</button>
-                    <div class="add-menu" id="addMenu" hidden role="menu"></div></div>
                 <div class="tracks-list" id="tracksList"></div>
-            </div>
-
-            <div class="section">
-                <div class="section-title">Track Options</div>
-                <div class="inst-line"><span id="trkInstName">MIDI (generic)</span><a id="trkAdvanced" hidden>show channel</a></div>
-                <div class="ctrl">
-                    <div class="ctrl-label">MIDI Input</div>
-                    <select id="trkInput"><option value="">Omni (All)</option></select>
-                </div>
-                <div class="ctrl">
-                    <div class="ctrl-label">MIDI Output</div>
-                    <select id="trkOutput"><option value="">None (synth only)</option></select>
-                </div>
-                <div class="ctrl-row" id="trkChanRow">
-                    <div class="ctrl">
-                        <div class="ctrl-label">Channel</div>
-                        <input type="number" id="trkChannel" min="1" max="16" value="1">
-                    </div>
-                    <div class="ctrl">
-                        <div class="ctrl-label">Velocity</div>
-                        <input type="number" id="trkVel" min="1" max="127" value="100">
-                    </div>
-                </div>
-                <div class="btn-row" style="margin-top:8px"><button id="deleteTrack" class="danger" title="Delete the selected track (Ctrl+Z to undo)">Delete Track</button></div>
+                <div class="add-wrap"><button id="addTrack" class="add-track-row" aria-haspopup="true" aria-expanded="false"><svg class="g chev" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 2v6M2 5h6"/></svg>Add Track</button>
+                    <div class="add-menu" id="addMenu" hidden role="menu"></div></div>
             </div>
         </div>
 
@@ -669,8 +626,6 @@
                 </div>
                 <div style="flex:1"></div>
                 <div class="tb-group">
-                    <button id="saveBtn">Save</button>
-                    <button id="loadBtn">Load</button>
                     <button id="clearTrack" class="danger">Clear Track</button>
                 </div>
                 <input type="file" id="projectFile" accept=".zip" style="display:none">
@@ -713,6 +668,83 @@
         </div>
     </div>
 
+    <!-- TRACK DETAILS + TRANSPORT -->
+    <div class="bottom-row">
+        <div class="section panel-details">
+            <div class="section-title">Track Details</div>
+            <div class="details-grid">
+                <div class="details-col">
+                <div class="inst-line"><span id="trkInstName">MIDI (generic)</span><a id="trkAdvanced" hidden>show channel</a></div>
+                <div class="ctrl">
+                    <div class="ctrl-label">MIDI Input</div>
+                    <select id="trkInput"><option value="">Omni (All)</option></select>
+                </div>
+                <div class="ctrl">
+                    <div class="ctrl-label">MIDI Output</div>
+                    <select id="trkOutput"><option value="">None (synth only)</option></select>
+                </div>
+                </div>
+                <div class="details-col">
+                <div class="ctrl-row" id="trkChanRow">
+                    <div class="ctrl">
+                        <div class="ctrl-label">Channel</div>
+                        <input type="number" id="trkChannel" min="1" max="16" value="1">
+                    </div>
+                    <div class="ctrl">
+                        <div class="ctrl-label">Velocity</div>
+                        <input type="number" id="trkVel" min="1" max="127" value="100">
+                    </div>
+                </div>
+                <div class="btn-row"><button id="deleteTrack" class="danger" title="Delete the selected track (Ctrl+Z to undo)">Delete Track</button></div>
+                </div>
+            </div>
+        </div>
+        <div class="section panel-transport">
+            <div class="section-title">Transport</div>
+            <div class="details-grid">
+                <div class="details-col">
+                <div class="ctrl-row">
+                    <div class="ctrl">
+                        <div class="ctrl-label">BPM</div>
+                        <input type="number" id="bpm" min="40" max="300" value="120">
+                    </div>
+                    <div class="ctrl">
+                        <div class="ctrl-label">Loop (bars)</div>
+                        <input type="number" id="loopBarsInput" min="1" max="64" value="4">
+                    </div>
+                </div>
+                <div class="transport-btns">
+                    <button id="recBtn"><svg class="g" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4"/></svg>Rec</button>
+                    <button id="playBtn"><svg class="g" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1l7 4-7 4z"/></svg>Play</button>
+                    <button id="stopBtn"><svg class="g" viewBox="0 0 10 10" aria-hidden="true"><rect x="1.5" y="1.5" width="7" height="7"/></svg>Stop</button>
+                </div>
+                </div>
+                <div class="details-col">
+                <div class="ctrl">
+                    <div class="ctrl-label">Record Channel</div>
+                    <select id="recChannel">
+                        <option value="0">All Channels (Omni)</option>
+                    </select>
+                </div>
+                <div class="toggle-row">
+                    <input type="checkbox" id="precount">
+                    <label for="precount">Pre-count (1 bar before rec)</label>
+                </div>
+                <div class="toggle-row">
+                    <input type="checkbox" id="metronome">
+                    <label for="metronome">Metronome</label>
+                </div>
+                <div class="toggle-row">
+                    <input type="checkbox" id="audioPreview" checked>
+                    <label for="audioPreview" title="Plays in the browser only for tracks without a MIDI output; tracks with a device are heard on the device">Audio preview (no device)</label>
+                </div>
+                <div style="font-size:9px; color:var(--text-secondary); line-height:1.5;">
+                    Arm <b style="color:var(--danger)">Rec</b>, then <b style="color:var(--success)">Play</b> (or <b>Space</b>). Notes record live into the active track, looped.
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="status-bar">
         <div class="status-info">
             <div>Track <span class="status-val" id="stTrack">Track 1</span></div>

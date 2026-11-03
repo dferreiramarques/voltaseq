@@ -6,13 +6,14 @@ Every track belongs to an **instrument**. A generic MIDI track gives you a piano
 
 ## Features
 
+- Layout: file management and settings in the top bar, tracks on the left (with an Add Track row below them), the editor in the middle, and Track Details and Transport along the bottom
 - Multi-track loops, each with its own MIDI output, channel and velocity
 - Recording with a one-bar pre-count, metronome and quantize
 - Pencil and eraser tools to draw and delete notes
 - BPM and loop length in bars, transpose, undo and redo (Ctrl+Z / Ctrl+Shift+Z)
 - MIDI monitor for incoming notes and SysEx
 - Browser preview synth for tracks without a MIDI output; tracks connected to a device are only heard on the device
-- Delete tracks from Track Options or by right-clicking a track (undoable)
+- Delete tracks from Track Details or by right-clicking a track (undoable)
 - Save and load projects (`.zip` with `project.json`), including instrument tracks
 
 ## Instruments
@@ -30,7 +31,7 @@ Press **Add Track** and choose an instrument.
 
 Use **⚙ Settings** to choose which instruments appear in that menu (generic MIDI is always there). Hiding an instrument doesn't affect tracks or projects that already use it.
 
-Instrument tracks hide the MIDI channel because the instrument sets it (the TD-3 track reads it from the device). Use **show channel** in Track Options to change it by hand.
+Instrument tracks hide the MIDI channel because the instrument sets it (the TD-3 track reads it from the device). Use **show channel** in Track Details to change it by hand.
 
 ### Behringer TD-3
 
