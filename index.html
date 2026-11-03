@@ -523,6 +523,13 @@
     .switch::after { width: 12px; height: 12px; top: 1px; left: 1px; border-radius: 2px; transition: left var(--dur-fast) var(--ease-ui); }
     .switch[aria-checked="true"]::after { left: 17px; }
     .settings-btn { height: var(--control-h-lg); }
+    .ctx-menu { position: fixed; z-index: 95; min-width: 150px; background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius-sm); box-shadow: var(--shadow-popover); padding: var(--space-1) 0; }
+    .ctx-menu[hidden] { display: none; }
+    .ctx-menu button { display: flex; width: 100%; justify-content: flex-start; height: var(--list-row-h); padding: 0 var(--space-4); border: 0; border-radius: 0; background: transparent; font-weight: 400; }
+    .ctx-menu button:hover { background: var(--accent-dark); }
+    .ctx-menu button.danger:hover { background: var(--rec); color: #fff; }
+    .ctx-menu hr { border: 0; border-top: 1px solid var(--border); margin: var(--space-1) 0; }
+    #deleteTrack { width: 100%; }
     @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
     ::-webkit-scrollbar { width: 12px; height: 12px; }
@@ -621,6 +628,7 @@
                         <input type="number" id="trkVel" min="1" max="127" value="100">
                     </div>
                 </div>
+                <div class="btn-row" style="margin-top:8px"><button id="deleteTrack" class="danger" title="Delete the selected track (Ctrl+Z to undo)">Delete Track</button></div>
             </div>
         </div>
 
@@ -718,6 +726,7 @@
 
 <div class="vs-busy" id="vsBusy" hidden><div class="vs-busy-card" role="status" aria-live="assertive"><div class="vs-busy-t" id="vsBusyT"></div><div class="vs-busy-s" id="vsBusyS"></div><div class="vs-busy-bar"><i></i></div></div></div>
 <div class="vs-toast" id="vsToast" role="status"></div>
+<div class="ctx-menu" id="trackMenu" role="menu" hidden></div>
 <div class="vs-modal" id="settingsModal" hidden>
     <div class="vs-modal-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
         <div class="vs-modal-head"><h2 id="settingsTitle">Settings</h2><button id="settingsClose" aria-label="Close settings"><svg class="g chev" viewBox="0 0 10 10" aria-hidden="true"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5"/></svg></button></div>
@@ -1309,6 +1318,7 @@ class Seq {
                 if (e.target.classList.contains('track-mute')) { trk.muted = !trk.muted; this.renderTracks(); return; }
                 this.selectTrack(trk.id);
             });
+            item.addEventListener('contextmenu', e => { e.preventDefault(); this.openTrackMenu(trk, e.clientX, e.clientY); });
             list.appendChild(item);
         });
     }
@@ -1463,6 +1473,34 @@ class Seq {
         this.tracks.push(trk);
         this.selectTrack(id);
     }
+    // ── DELETE TRACK ──────────────────────────────────────
+    deleteTrack(id = this.activeId) {
+        const i = this.tracks.findIndex(t => t.id === id); if (i < 0) return;
+        const trk = this.tracks[i];
+        this.pushUndo();
+        const out = trk.outputId && this.outputs.get(trk.outputId);       // silence anything it was playing
+        if (out) { const chs = new Set([trk.channel & 15, ...trk.notes.filter(n => n.ch != null).map(n => n.ch & 15)]); chs.forEach(c => { try { out.send([0xB0 | c, 123, 0]); } catch (e) {} }); }
+        this.tracks.splice(i, 1);
+        if (!this.tracks.length) this.tracks.push(this.newTrack(1));     // always keep one track
+        const next = this.tracks[Math.min(i, this.tracks.length - 1)];
+        this.selectTrack(id === this.activeId ? next.id : this.activeId);
+        this.toast(`Deleted “${trk.name}” · Ctrl+Z to undo`);
+    }
+    openTrackMenu(trk, x, y) {
+        const m = document.getElementById('trackMenu');
+        m.innerHTML = '';
+        const item = (label, fn, cls) => { const b = document.createElement('button'); b.setAttribute('role', 'menuitem'); b.textContent = label; if (cls) b.className = cls; b.onclick = () => { this.closeTrackMenu(); fn(); }; m.appendChild(b); };
+        item(trk.muted ? 'Unmute' : 'Mute', () => { trk.muted = !trk.muted; this.renderTracks(); });
+        m.appendChild(document.createElement('hr'));
+        item('Delete Track', () => this.deleteTrack(trk.id), 'danger');
+        m.hidden = false;
+        const r = m.getBoundingClientRect();
+        m.style.left = Math.min(x, innerWidth - r.width - 4) + 'px';
+        m.style.top = Math.min(y, innerHeight - r.height - 4) + 'px';
+        m.querySelector('button').focus();
+    }
+    closeTrackMenu() { document.getElementById('trackMenu').hidden = true; }
+
     // Show the piano roll, or the instrument's own editor, for the active track.
     mountEditor() {
         const trk = this.active, p = this.prof(trk);
@@ -1750,6 +1788,10 @@ class Seq {
         document.getElementById('stopBtn').onclick = () => this.stop();
         document.getElementById('addTrack').onclick = e => { e.stopPropagation(); this.toggleAddMenu(); };
         document.addEventListener('click', e => { if (!e.target.closest('.add-wrap')) this.toggleAddMenu(false); });
+        document.getElementById('deleteTrack').onclick = () => this.deleteTrack();
+        document.addEventListener('click', e => { if (!e.target.closest('#trackMenu')) this.closeTrackMenu(); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') this.closeTrackMenu(); });
+        window.addEventListener('blur', () => this.closeTrackMenu());
         document.getElementById('settingsBtn').onclick = () => this.openSettings();
         document.getElementById('settingsClose').onclick = () => this.closeSettings();
         document.getElementById('settingsModal').addEventListener('click', e => { if (e.target.id === 'settingsModal') this.closeSettings(); });

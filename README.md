@@ -12,6 +12,7 @@ Every track belongs to an **instrument**. A generic MIDI track gives you a piano
 - BPM and loop length in bars, transpose, undo and redo (Ctrl+Z / Ctrl+Shift+Z)
 - MIDI monitor for incoming notes and SysEx
 - Browser preview synth for tracks without a MIDI output; tracks connected to a device are only heard on the device
+- Delete tracks from Track Options or by right-clicking a track (undoable)
 - Save and load projects (`.zip` with `project.json`), including instrument tracks
 
 ## Instruments
