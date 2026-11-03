@@ -554,6 +554,37 @@
     .panel-transport .toggle-row:first-of-type { margin-top: var(--space-4); }
     .panel-details .btn-row { margin-top: var(--space-4); }
     @media (max-width: 1100px) { .details-grid { grid-template-columns: 1fr; gap: var(--space-3); } }
+
+    /* ════ LAYOUT v2: full-height track column · lighter note/instrument area ════ */
+    .main { min-height: 0; }
+    .workspace { flex: 1; display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+    .workspace .editor { min-height: 0; }
+    .bottom-row { grid-template-columns: 3fr 2fr; }
+    .sidebar { background: #1b1f29; }
+    .bottom-row { background: #1b1f29; }
+    /* the editing area (piano roll, velocity, monitor, instrument panels) sits on a lighter slate */
+    .editor {
+        --bg-panel: #2a303c; --bg-roll: #262b37; --bg-control: #313847; --bg-lighter: #3a4252;
+        --border: #404858; --border-soft: #313847; --bg-main: #1f242e;
+        background: var(--bg-roll);
+    }
+    .editor .pkey.black { background: rgba(0,0,0,0.22); }
+    .editor .toolbar { border-bottom-color: var(--border); }
+
+    /* collapsible track column */
+    .sidebar { transition: width var(--dur-fast) var(--ease-ui), min-width var(--dur-fast) var(--ease-ui); }
+    .tracks-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--space-4); }
+    .tracks-head .section-title { margin-bottom: 0; }
+    .collapse-btn { width: 20px; height: 20px; padding: 0; flex: none; }
+    .track-short { display: none; }
+    .sidebar.collapsed { width: 52px; min-width: 52px; }
+    .sidebar.collapsed .tracks-section { padding: var(--space-3) var(--space-2); }
+    .sidebar.collapsed .tracks-head { justify-content: center; }
+    .sidebar.collapsed .tracks-head .section-title, .sidebar.collapsed .track-meta, .sidebar.collapsed .track-mute, .sidebar.collapsed .add-label { display: none; }
+    .sidebar.collapsed .track-item { padding: 0; justify-content: flex-start; }
+    .sidebar.collapsed .track-short { display: block; flex: 1; text-align: center; font: 500 var(--text-micro)/1 var(--font-mono); padding: 8px 0; color: var(--text-primary); }
+    .sidebar.collapsed .track-item.muted-row .track-short { opacity: 0.4; }
+    .sidebar.collapsed .add-track-row { justify-content: center; padding: 0; }
     @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
 
     ::-webkit-scrollbar { width: 12px; height: 12px; }
@@ -582,13 +613,14 @@
         <!-- SIDEBAR -->
         <div class="sidebar">
             <div class="section tracks-section">
-                <div class="section-title">Tracks</div>
+                <div class="tracks-head"><div class="section-title">Tracks</div><button id="collapseTracks" class="collapse-btn" aria-expanded="true" title="Collapse track list" aria-label="Collapse track list"><svg class="g chev" viewBox="0 0 10 10" aria-hidden="true"><path d="M6.5 2l-3 3 3 3"/></svg></button></div>
                 <div class="tracks-list" id="tracksList"></div>
-                <div class="add-wrap"><button id="addTrack" class="add-track-row" aria-haspopup="true" aria-expanded="false"><svg class="g chev" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 2v6M2 5h6"/></svg>Add Track</button>
+                <div class="add-wrap"><button id="addTrack" class="add-track-row" aria-haspopup="true" aria-expanded="false"><svg class="g chev" viewBox="0 0 10 10" aria-hidden="true"><path d="M5 2v6M2 5h6"/></svg><span class="add-label">Add Track</span></button>
                     <div class="add-menu" id="addMenu" hidden role="menu"></div></div>
             </div>
         </div>
 
+        <div class="workspace">
         <!-- EDITOR -->
         <div class="editor">
             <div class="toolbar">
@@ -666,85 +698,86 @@
                 </div>
             </div>
         </div>
+    <!-- TRACK DETAILS + TRANSPORT -->
+        <div class="bottom-row">
+            <div class="section panel-details">
+                <div class="section-title">Track Details</div>
+                <div class="details-grid">
+                    <div class="details-col">
+                    <div class="inst-line"><span id="trkInstName">MIDI (generic)</span><a id="trkAdvanced" hidden>show channel</a></div>
+                    <div class="ctrl">
+                        <div class="ctrl-label">MIDI Input</div>
+                        <select id="trkInput"><option value="">Omni (All)</option></select>
+                    </div>
+                    <div class="ctrl">
+                        <div class="ctrl-label">MIDI Output</div>
+                        <select id="trkOutput"><option value="">None (synth only)</option></select>
+                    </div>
+                    </div>
+                    <div class="details-col">
+                    <div class="ctrl-row" id="trkChanRow">
+                        <div class="ctrl">
+                            <div class="ctrl-label">Channel</div>
+                            <input type="number" id="trkChannel" min="1" max="16" value="1">
+                        </div>
+                        <div class="ctrl">
+                            <div class="ctrl-label">Velocity</div>
+                            <input type="number" id="trkVel" min="1" max="127" value="100">
+                        </div>
+                    </div>
+                    <div class="btn-row"><button id="deleteTrack" class="danger" title="Delete the selected track (Ctrl+Z to undo)">Delete Track</button></div>
+                    </div>
+                </div>
+            </div>
+            <div class="section panel-transport">
+                <div class="section-title">Transport</div>
+                <div class="details-grid">
+                    <div class="details-col">
+                    <div class="ctrl-row">
+                        <div class="ctrl">
+                            <div class="ctrl-label">BPM</div>
+                            <input type="number" id="bpm" min="40" max="300" value="120">
+                        </div>
+                        <div class="ctrl">
+                            <div class="ctrl-label">Loop (bars)</div>
+                            <input type="number" id="loopBarsInput" min="1" max="64" value="4">
+                        </div>
+                    </div>
+                    <div class="transport-btns">
+                        <button id="recBtn"><svg class="g" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4"/></svg>Rec</button>
+                        <button id="playBtn"><svg class="g" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1l7 4-7 4z"/></svg>Play</button>
+                        <button id="stopBtn"><svg class="g" viewBox="0 0 10 10" aria-hidden="true"><rect x="1.5" y="1.5" width="7" height="7"/></svg>Stop</button>
+                    </div>
+                    </div>
+                    <div class="details-col">
+                    <div class="ctrl">
+                        <div class="ctrl-label">Record Channel</div>
+                        <select id="recChannel">
+                            <option value="0">All Channels (Omni)</option>
+                        </select>
+                    </div>
+                    <div class="toggle-row">
+                        <input type="checkbox" id="precount">
+                        <label for="precount">Pre-count (1 bar before rec)</label>
+                    </div>
+                    <div class="toggle-row">
+                        <input type="checkbox" id="metronome">
+                        <label for="metronome">Metronome</label>
+                    </div>
+                    <div class="toggle-row">
+                        <input type="checkbox" id="audioPreview" checked>
+                        <label for="audioPreview" title="Plays in the browser only for tracks without a MIDI output; tracks with a device are heard on the device">Audio preview (no device)</label>
+                    </div>
+                    <div style="font-size:9px; color:var(--text-secondary); line-height:1.5;">
+                        Arm <b style="color:var(--danger)">Rec</b>, then <b style="color:var(--success)">Play</b> (or <b>Space</b>). Notes record live into the active track, looped.
+                    </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
     </div>
 
-    <!-- TRACK DETAILS + TRANSPORT -->
-    <div class="bottom-row">
-        <div class="section panel-details">
-            <div class="section-title">Track Details</div>
-            <div class="details-grid">
-                <div class="details-col">
-                <div class="inst-line"><span id="trkInstName">MIDI (generic)</span><a id="trkAdvanced" hidden>show channel</a></div>
-                <div class="ctrl">
-                    <div class="ctrl-label">MIDI Input</div>
-                    <select id="trkInput"><option value="">Omni (All)</option></select>
-                </div>
-                <div class="ctrl">
-                    <div class="ctrl-label">MIDI Output</div>
-                    <select id="trkOutput"><option value="">None (synth only)</option></select>
-                </div>
-                </div>
-                <div class="details-col">
-                <div class="ctrl-row" id="trkChanRow">
-                    <div class="ctrl">
-                        <div class="ctrl-label">Channel</div>
-                        <input type="number" id="trkChannel" min="1" max="16" value="1">
-                    </div>
-                    <div class="ctrl">
-                        <div class="ctrl-label">Velocity</div>
-                        <input type="number" id="trkVel" min="1" max="127" value="100">
-                    </div>
-                </div>
-                <div class="btn-row"><button id="deleteTrack" class="danger" title="Delete the selected track (Ctrl+Z to undo)">Delete Track</button></div>
-                </div>
-            </div>
-        </div>
-        <div class="section panel-transport">
-            <div class="section-title">Transport</div>
-            <div class="details-grid">
-                <div class="details-col">
-                <div class="ctrl-row">
-                    <div class="ctrl">
-                        <div class="ctrl-label">BPM</div>
-                        <input type="number" id="bpm" min="40" max="300" value="120">
-                    </div>
-                    <div class="ctrl">
-                        <div class="ctrl-label">Loop (bars)</div>
-                        <input type="number" id="loopBarsInput" min="1" max="64" value="4">
-                    </div>
-                </div>
-                <div class="transport-btns">
-                    <button id="recBtn"><svg class="g" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4"/></svg>Rec</button>
-                    <button id="playBtn"><svg class="g" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1l7 4-7 4z"/></svg>Play</button>
-                    <button id="stopBtn"><svg class="g" viewBox="0 0 10 10" aria-hidden="true"><rect x="1.5" y="1.5" width="7" height="7"/></svg>Stop</button>
-                </div>
-                </div>
-                <div class="details-col">
-                <div class="ctrl">
-                    <div class="ctrl-label">Record Channel</div>
-                    <select id="recChannel">
-                        <option value="0">All Channels (Omni)</option>
-                    </select>
-                </div>
-                <div class="toggle-row">
-                    <input type="checkbox" id="precount">
-                    <label for="precount">Pre-count (1 bar before rec)</label>
-                </div>
-                <div class="toggle-row">
-                    <input type="checkbox" id="metronome">
-                    <label for="metronome">Metronome</label>
-                </div>
-                <div class="toggle-row">
-                    <input type="checkbox" id="audioPreview" checked>
-                    <label for="audioPreview" title="Plays in the browser only for tracks without a MIDI output; tracks with a device are heard on the device">Audio preview (no device)</label>
-                </div>
-                <div style="font-size:9px; color:var(--text-secondary); line-height:1.5;">
-                    Arm <b style="color:var(--danger)">Rec</b>, then <b style="color:var(--success)">Play</b> (or <b>Space</b>). Notes record live into the active track, looped.
-                </div>
-                </div>
-            </div>
-        </div>
-    </div>
     <div class="status-bar">
         <div class="status-info">
             <div>Track <span class="status-val" id="stTrack">Track 1</span></div>
@@ -1340,12 +1373,14 @@ class Seq {
         list.innerHTML = '';
         this.tracks.forEach(trk => {
             const item = document.createElement('div');
-            item.className = 'track-item' + (trk.id === this.activeId ? ' active' : '');
+            item.className = 'track-item' + (trk.id === this.activeId ? ' active' : '') + (trk.muted ? ' muted-row' : '');
             item.innerHTML =
                 `<div class="track-color" style="background:${trk.color}"></div>` +
                 `<div class="track-meta"><div class="track-name">${trk.name}<span class="inst-badge">${this.prof(trk).short}</span></div>` +
                 `<div class="track-info">${this.prof(trk).trackInfo ? this.prof(trk).trackInfo(trk, this) : trk.notes.length + ' notes · ch' + (trk.channel + 1)}</div></div>` +
-                `<button class="track-mute ${trk.muted ? 'muted' : ''}">M</button>`;
+                `<button class="track-mute ${trk.muted ? 'muted' : ''}">M</button>` +
+                `<div class="track-short">${trk.instrument && trk.instrument !== 'midi' ? this.prof(trk).short : this.tracks.indexOf(trk) + 1}</div>`;
+            item.title = trk.name + (trk.muted ? ' (muted)' : '');
             item.addEventListener('click', e => {
                 if (e.target.classList.contains('track-mute')) { trk.muted = !trk.muted; this.renderTracks(); return; }
                 this.selectTrack(trk.id);
@@ -1487,6 +1522,7 @@ class Seq {
     }
 
     selectTrack(id) {
+        if (!this.tracks.some(t => t.id === id)) id = this.tracks[0] && this.tracks[0].id;
         this.activeId = id; this.selected.clear();
         this.renderTracks(); this.renderRoll(); this.syncTrackOptions(); this.updateStatus();
         this.mountEditor();
@@ -1535,7 +1571,8 @@ class Seq {
 
     // Show the piano roll, or the instrument's own editor, for the active track.
     mountEditor() {
-        const trk = this.active, p = this.prof(trk);
+        const trk = this.active; if (!trk) return;
+        const p = this.prof(trk);
         const both = p.editor === 'both', custom = p.editor === 'custom' || (both && trk.view === 'sound');
         const vs = document.getElementById('viewSwitch');
         vs.hidden = !both;
@@ -1584,10 +1621,25 @@ class Seq {
         document.getElementById('settingsModal').hidden = true;
         if (this._settingsReturn) this._settingsReturn.focus();
     }
+    setTracksCollapsed(on) {
+        this.tracksCollapsed = on;
+        document.querySelector('.sidebar').classList.toggle('collapsed', on);
+        const b = document.getElementById('collapseTracks');
+        b.setAttribute('aria-expanded', !on);
+        const lbl = on ? 'Expand track list' : 'Collapse track list'; b.title = lbl; b.setAttribute('aria-label', lbl);
+        b.querySelector('path').setAttribute('d', on ? 'M3.5 2l3 3-3 3' : 'M6.5 2l-3 3 3 3');
+        try { localStorage.setItem('voltaseq-tracks-collapsed', on ? '1' : '0'); } catch (e) {}
+        this.toggleAddMenu(false);
+        requestAnimationFrame(() => { this.sizeRoll(); this.renderRoll(); });
+    }
     toggleAddMenu(show) {
         const menu = document.getElementById('addMenu'), btn = document.getElementById('addTrack');
         const open = show != null ? show : menu.hidden;
         menu.hidden = !open; btn.setAttribute('aria-expanded', open);
+        if (open && this.tracksCollapsed) {          // the narrow column can't hold the menu: float it beside the button
+            const r = btn.getBoundingClientRect();
+            Object.assign(menu.style, { position: 'fixed', left: (r.right + 4) + 'px', top: r.top + 'px', right: 'auto', width: '240px' });
+        } else Object.assign(menu.style, { position: '', left: '', top: '', right: '', width: '' });
         if (open) {
             menu.innerHTML = '';
             INSTRUMENT_CATALOG.filter(c => c.id === 'midi' || this.enabledInst.has(c.id)).forEach(c => {
@@ -1821,6 +1873,9 @@ class Seq {
         document.getElementById('addTrack').onclick = e => { e.stopPropagation(); this.toggleAddMenu(); };
         document.addEventListener('click', e => { if (!e.target.closest('.add-wrap')) this.toggleAddMenu(false); });
         document.getElementById('deleteTrack').onclick = () => this.deleteTrack();
+        document.getElementById('collapseTracks').onclick = () => this.setTracksCollapsed(!this.tracksCollapsed);
+        let collapsed = false; try { collapsed = localStorage.getItem('voltaseq-tracks-collapsed') === '1'; } catch (e) {}
+        if (collapsed) this.setTracksCollapsed(true);
         document.addEventListener('click', e => { if (!e.target.closest('#trackMenu')) this.closeTrackMenu(); });
         document.addEventListener('keydown', e => { if (e.key === 'Escape') this.closeTrackMenu(); });
         window.addEventListener('blur', () => this.closeTrackMenu());

@@ -6,7 +6,7 @@ Every track belongs to an **instrument**. A generic MIDI track gives you a piano
 
 ## Features
 
-- Layout: file management and settings in the top bar, tracks on the left (with an Add Track row below them), the editor in the middle, and Track Details and Transport along the bottom
+- Layout: file management and settings in the top bar; a full-height track column on the left (with an Add Track row below the tracks) that collapses to a narrow strip showing each track's number or instrument code; the editor on a lighter background, with Track Details and Transport below it
 - Multi-track loops, each with its own MIDI output, channel and velocity
 - Recording with a one-bar pre-count, metronome and quantize
 - Pencil and eraser tools to draw and delete notes
