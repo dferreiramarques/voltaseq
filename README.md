@@ -16,7 +16,7 @@ Every track belongs to an **instrument**. A generic MIDI track gives you a piano
 
 ## Instruments
 
-Press **+ ADD TRACK** and choose an instrument.
+Press **Add Track** and choose an instrument.
 
 | Instrument | What you get |
 | --- | --- |
@@ -25,6 +25,7 @@ Press **+ ADD TRACK** and choose an instrument.
 | **KORG volca sample 2** | 10-part step grid, sample and sound per part, sample manager over USB |
 | **Modal CRAFTsynth 2.0** | Piano roll plus a full sound editor that follows the synth's knobs, and a sound library |
 | **Arturia MicroFreak** | Piano roll plus an editor for every MIDI-controllable parameter, preset recall and a sound library |
+| **Elektron SidStation** | Piano roll plus a live editor for the whole sound (3 oscillators, filter, 4 LFOs, wavetables), templates and patch dumps |
 
 Use **⚙ Settings** to choose which instruments appear in that menu (generic MIDI is always there). Hiding an instrument doesn't affect tracks or projects that already use it.
 
@@ -69,9 +70,20 @@ An instrument is a script in `instruments/` that registers itself on `window.Vol
 - **Knobs on the synth** update the panel when Utility › MIDI › Knob send CCs is On.
 - **Presets:** **Load preset** recalls presets 1–512 (program change, plus bank select above 128; the bank select part needs checking on your unit). Sounds saved in VoltaSeq are a layer on top: load the preset, then **Send sound**.
 
+### Elektron SidStation
+
+- **Two views:** **Notes** and **Sound**. The sound editor covers the whole patch: three oscillators (waveform, sync, ring mod, pitch, envelope, pulse width, vibrato), the filter and its envelope, four LFOs, the wavetables (with presets for drums, Hubbard-style attacks and chord arps) and the front-knob assignments.
+- **Live:** every change is written into the SidStation's edit buffer with the manual's Direct Program SysEx messages, like turning its knobs. Press **Connect SidStation** once so the browser allows SysEx.
+- **Patches:** start from templates (PWM lead, sync lead, ring-mod bell, acid bass, poly pad, drums), **Send to edit buffer**, **Store on SidStation** (patch dump), open and save `.syx`, and dump a patch from the unit to load it into the track. **Mutate** and **Random** per section, and Undo for everything.
+- The sound is saved with the project. For bank management (receiving and sending all 100 patches), use the standalone SidStation editor.
+
+## Design
+
+The interface follows the [Ableton Live design system](https://github.com/rengwu/ableton-live-ds) (dense, flat and square, 1px dividers, Title Case labels, colour only for state, IBM Plex Sans and Mono), applied with VoltaSeq's own colour palette. Instrument editors keep the look of their hardware.
+
 ## Credits
 
-volca sample 2 USB sample transfer from [volsa2](https://github.com/00nktk/volsa2) by 00nktk (MIT), reimplemented; part CCs from KORG's MIDI implementation chart. CRAFTsynth 2.0 parameters from the Modal Electronics user manual. MicroFreak CCs from the MicroFreak manual's CC overview and the midi.guide database. TD-3 SysEx and pattern format from community documentation by [303patterns.com](https://303patterns.com/td3-midi.html) and the [td3-tool](https://github.com/erikdevos/td3-tool) project; the codec here is an independent implementation, checked against a pattern read from a real TD-3.
+volca sample 2 USB sample transfer from [volsa2](https://github.com/00nktk/volsa2) by 00nktk (MIT), reimplemented; part CCs from KORG's MIDI implementation chart. SidStation messages from the SidStation owner's manual (rev 2.2b). CRAFTsynth 2.0 parameters from the Modal Electronics user manual. MicroFreak CCs from the MicroFreak manual's CC overview and the midi.guide database. TD-3 SysEx and pattern format from community documentation by [303patterns.com](https://303patterns.com/td3-midi.html) and the [td3-tool](https://github.com/erikdevos/td3-tool) project; the codec here is an independent implementation, checked against a pattern read from a real TD-3.
 
 ## License
 

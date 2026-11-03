@@ -429,7 +429,7 @@ const TD3 = (() => {
     render();
     cancelAnimationFrame(raf); raf = requestAnimationFrame(tickPlayhead);
   }
-  function unmount() { cancelAnimationFrame(raf); clearTimeout(liveT); if (unSysex) { unSysex(); unSysex = null; } }
+  function unmount() { cancelAnimationFrame(raf); clearTimeout(liveT); }
 
   let selStep = 0;
   function buildSteps() {

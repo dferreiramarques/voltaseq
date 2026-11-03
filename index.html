@@ -6,7 +6,7 @@
 <title>VoltaSeq — Loop Sequencer</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -348,6 +348,183 @@
     .switch[aria-checked="true"]:hover { background: var(--accent-alt); }
     @media (prefers-reduced-motion: reduce) { .switch::after { transition: none; } }
 
+
+    /* ════════════════════════════════════════════════════════════════════
+       DESIGN SYSTEM — Ableton Live DS (github.com/rengwu/ableton-live-ds),
+       applied with VoltaSeq's own palette. Density over whitespace, flat and
+       square except what you grab, colour = information, two-tier depth,
+       1px dividers instead of gaps, Title Case, restrained motion.
+       ════════════════════════════════════════════════════════════════════ */
+    :root {
+        /* tokens (DS structure, VoltaSeq colours) */
+        --canvas: var(--bg-panel);          /* structural layer: header, sidebar, toolbar */
+        --canvas-raised: var(--bg-control);
+        --module: var(--bg-roll);           /* operating layer: roll, instrument panels */
+        --field: var(--bg-main);
+        --on: var(--accent);                /* active / selected */
+        --edit: var(--accent-alt);          /* editing / playhead */
+        --rec: var(--danger);               /* record */
+        --play: var(--success);             /* transport playing */
+        --hold: var(--warning);             /* mute / hold */
+        --font-ui: "IBM Plex Sans", "SF Pro Text", system-ui, sans-serif;
+        --font-mono: "IBM Plex Mono", "SF Mono", ui-monospace, monospace;
+        --text-micro: 9px; --text-label: 11px; --text-body: 12px; --text-section: 13px; --text-title: 15px;
+        --space-1: 2px; --space-2: 4px; --space-3: 6px; --space-4: 8px; --space-5: 12px;
+        --control-h: 20px; --control-h-lg: 24px; --list-row-h: 26px;
+        --radius-sm: 2px; --radius-pill: 3px;
+        --shadow-popover: 0 4px 14px rgba(0,0,0,0.45);
+        --shadow-dialog: 0 12px 48px rgba(0,0,0,0.55);
+        --ease-ui: cubic-bezier(0.2, 0, 0.2, 1);
+        --dur-instant: 60ms; --dur-fast: 120ms;
+    }
+    html, body { font-family: var(--font-ui); font-size: var(--text-label); font-feature-settings: normal; letter-spacing: 0; }
+    input[type="number"], .pos-display, .log-time, .log-raw, .log-data, .status-val, .pkey, .bar-tick, .inst-badge, .vs-busy-s {
+        font-family: var(--font-mono); font-feature-settings: "tnum" 1, "lnum" 1;
+    }
+    :focus-visible { outline: 1px solid var(--edit); outline-offset: 1px; }
+    svg.g { width: 10px; height: 10px; fill: currentColor; flex: none; }
+    svg.g.chev { fill: none; stroke: currentColor; stroke-width: 1.4; stroke-linecap: round; stroke-linejoin: round; }
+
+    /* header: compact transport chrome */
+    .header { padding: 0 var(--space-5); height: 34px; box-shadow: none; transition: background var(--dur-fast) var(--ease-ui); }
+    .header h1 { font: 600 var(--text-section)/1 var(--font-ui); letter-spacing: 0; display: flex; align-items: center; gap: var(--space-3); }
+    .header h1 .logo { width: 11px; height: 11px; fill: var(--on); }
+    .header.recording { background: color-mix(in srgb, var(--rec) 16%, var(--canvas)); animation: none; }
+    .header-right { gap: var(--space-5); }
+    .midi-status { font-size: var(--text-label); gap: var(--space-3); }
+    .status-dot.connected, .midi-activity.active { box-shadow: none; }
+
+    /* sidebar */
+    .sidebar { width: 236px; min-width: 236px; }
+    .section { padding: var(--space-4) var(--space-5) var(--space-5); border-bottom: 1px solid var(--border); }
+    .section-title { font: 600 var(--text-body)/1.2 var(--font-ui); color: var(--text-primary); text-transform: none; letter-spacing: 0; margin-bottom: var(--space-4); }
+    .ctrl { gap: var(--space-1); margin-bottom: var(--space-3); }
+    .ctrl-label { font: 400 var(--text-label)/1.2 var(--font-ui); text-transform: none; letter-spacing: 0; color: var(--text-secondary); }
+    .ctrl-row { gap: var(--space-3); }
+
+    /* fields: square, flat, field-height */
+    input[type="number"]:where(:not(.inst-panel *)), input[type="text"]:where(:not(.inst-panel *)), select:where(:not(.inst-panel *)) {
+        height: var(--control-h-lg); padding: 0 var(--space-3); border-radius: 0; background: var(--field);
+        border: 1px solid var(--border); font-size: var(--text-label); transition: border-color var(--dur-instant) var(--ease-ui);
+    }
+    input:where(:not(.inst-panel *)):focus, select:where(:not(.inst-panel *)):focus { border-color: var(--on); box-shadow: none; }
+    input[type="checkbox"] { accent-color: var(--on); }
+
+    /* buttons: flat, barely rounded, hover only lightens, state = fill */
+    button:where(:not(.inst-panel *)) {
+        height: var(--control-h-lg); padding: 0 10px; border-radius: var(--radius-sm);
+        font: 500 var(--text-label)/1 var(--font-ui); letter-spacing: 0;
+        background: var(--canvas-raised); border: 1px solid rgba(0,0,0,0.35); color: var(--text-primary);
+        display: inline-flex; align-items: center; justify-content: center; gap: 5px;
+        transition: background var(--dur-instant) var(--ease-ui), color var(--dur-instant) var(--ease-ui);
+    }
+    button:where(:not(.inst-panel *)):hover { background: var(--bg-lighter); border-color: rgba(0,0,0,0.35); }
+    button:where(:not(.inst-panel *)):active { transform: none; }
+    button:where(:not(.inst-panel *)):disabled { opacity: 0.4; }
+    button:where(:not(.inst-panel *)):disabled:hover { background: var(--canvas-raised); border-color: rgba(0,0,0,0.35); }
+    button.danger { color: var(--rec); }
+    button.danger:hover { background: var(--rec); color: #fff; border-color: rgba(0,0,0,0.35); }
+    .transport-btns { gap: var(--space-2); margin-top: var(--space-3); }
+    .transport-btns button { height: 28px; padding: 0 6px; font-size: var(--text-label); }
+    #recBtn.armed { color: var(--rec); border-color: var(--rec); }
+    #recBtn.recording { background: var(--rec); color: #fff; border-color: rgba(0,0,0,0.35); }
+    #playBtn.playing { background: var(--play); color: #04140e; border-color: rgba(0,0,0,0.35); }
+    .toggle-row { margin-top: var(--space-3); gap: var(--space-3); }
+    .toggle-row label { font-size: var(--text-label); }
+
+    /* tracks: a dense list, rows butt with 1px dividers; selected row = solid fill */
+    .add-wrap button { width: 100%; }
+    .tracks-list { margin-top: var(--space-4); border-top: 1px solid var(--border); }
+    .track-item {
+        margin: 0; padding: 0 var(--space-3) 0 0; min-height: var(--list-row-h); gap: var(--space-3);
+        border: 0; border-bottom: 1px solid var(--border); border-radius: 0; background: transparent;
+        transition: background var(--dur-instant) var(--ease-ui);
+    }
+    .track-item:hover { background: rgba(255,255,255,0.04); border-color: var(--border); }
+    .track-item.active { background: var(--accent-dark); border-color: var(--border); }
+    .track-item.active .track-info { color: rgba(255,255,255,0.75); }
+    .track-color { width: 3px; height: auto; align-self: stretch; border-radius: 0; }
+    .track-meta { padding: var(--space-2) 0; }
+    .track-name { font-size: var(--text-label); font-weight: 500; }
+    .track-info { font-size: var(--text-micro); margin-top: 1px; }
+    .track-mute { width: 18px; height: 18px; font-size: var(--text-micro); border-radius: var(--radius-sm); background: var(--field); }
+    .track-mute.muted { background: var(--hold); color: #241a02; border-color: rgba(0,0,0,0.35); }
+    .inst-badge { font-size: var(--text-micro); font-weight: 500; letter-spacing: 0; border-radius: var(--radius-sm); padding: 0 4px; margin-left: 5px; }
+    .track-item.active .inst-badge { background: rgba(0,0,0,0.25); border-color: transparent; color: #fff; }
+    .inst-line { font-size: var(--text-label); font-weight: 500; }
+    .inst-line a { font-size: var(--text-label); }
+
+    /* add menu & toasts: the only floating layers, one soft drop */
+    .add-menu { border-radius: var(--radius-sm); padding: var(--space-1) 0; box-shadow: var(--shadow-popover); gap: 0; }
+    .add-menu button { height: auto; min-height: var(--list-row-h); padding: var(--space-2) var(--space-4); border: 0; border-radius: 0; align-items: flex-start; }
+    .add-menu button:hover { background: var(--accent-dark); border: 0; }
+    .add-menu button small { font-size: var(--text-micro); }
+    .add-menu button:hover small { color: rgba(255,255,255,0.75); }
+    .vs-toast { border-radius: var(--radius-sm); border: 1px solid var(--border); box-shadow: var(--shadow-popover); font-size: var(--text-label); transition: opacity var(--dur-fast) var(--ease-ui); }
+
+    /* toolbar */
+    .toolbar { padding: var(--space-2) var(--space-4); gap: var(--space-4); min-height: 34px; }
+    .tb-group { gap: var(--space-2); }
+    .tb-label { font: 400 var(--text-label)/1 var(--font-ui); text-transform: none; letter-spacing: 0; }
+    .toolbar button { padding: 0 var(--space-4); }
+    .toolbar-select { height: var(--control-h-lg); padding: 0 var(--space-3); }
+    .tool-select { gap: 1px; padding: 1px; border-radius: var(--radius-pill); background: var(--field); border: 1px solid var(--border); }
+    .tool-btn { width: 28px; height: 20px; border-radius: var(--radius-pill); border: 0; }
+    .tool-btn svg { width: 13px; height: 13px; }
+    .tool-btn:hover { background: var(--bg-lighter); }
+    .tool-btn.active { background: var(--on); border: 0; }
+    .tool-btn.active.eraser { background: var(--hold); color: #241a02; }
+    .pos-display { font-size: var(--text-body); font-weight: 500; letter-spacing: 0; padding: 0 var(--space-4); height: var(--control-h-lg); display: flex; align-items: center; justify-content: center; border-radius: 0; color: var(--edit); }
+
+    /* piano roll: flat */
+    .keys-view, .vel-label { width: 48px; min-width: 48px; }
+    .pkey { font-size: 8px; }
+    .ruler-view { height: 20px; min-height: 20px; }
+    .bar-tick { font-size: var(--text-micro); font-weight: 500; }
+    .note-block { border-radius: 1px; box-shadow: none; border: 1px solid rgba(0,0,0,0.35); transition: none; }
+    .note-block.playing { filter: brightness(1.45); box-shadow: none; }
+    .playhead { width: 1px; background: var(--edit); box-shadow: none; }
+    .add-bars { border-radius: 0; padding: var(--space-3); box-shadow: none; }
+    .ab-label { text-transform: none; letter-spacing: 0; font-size: var(--text-micro); }
+    .ab-btn { height: var(--control-h); padding: 0 2px; font-size: var(--text-micro); }
+    .velocity-lane { height: 64px; min-height: 64px; }
+    .vel-label { font: 500 var(--text-label)/1 var(--font-ui); letter-spacing: 0; text-transform: none; }
+    .vel-head { box-shadow: none; border: 1px solid rgba(0,0,0,0.35); }
+    .vel-head:hover { transform: none; filter: brightness(1.25); }
+
+    /* monitor & status bar */
+    .monitor { transition: height var(--dur-fast) var(--ease-ui); }
+    .monitor.collapsed { height: 52px; }
+    .monitor-head { padding: var(--space-2) var(--space-4); }
+    .monitor-title { font: 600 var(--text-body)/1 var(--font-ui); color: var(--text-primary); text-transform: none; letter-spacing: 0; }
+    .mon-btn { height: var(--control-h); font-size: var(--text-label); }
+    .monitor-log { padding: var(--space-2) var(--space-4); font-size: var(--text-label); }
+    .log-type { font-weight: 500; }
+    .status-bar { padding: 0 var(--space-4); height: 24px; font-size: var(--text-label); }
+    .status-val { font-weight: 500; }
+
+    /* dialogs: square, one drop shadow, no blur */
+    .vs-busy { backdrop-filter: none; }
+    .vs-busy-card { border-radius: 0; border: 1px solid var(--border); box-shadow: var(--shadow-dialog); padding: var(--space-5) var(--space-6, 16px); }
+    .vs-busy-t { font: 600 var(--text-title)/1.25 var(--font-ui); }
+    .vs-busy-bar { border-radius: 0; height: 2px; }
+    .vs-busy-bar i { background: var(--edit); }
+    .vs-modal-card { border-radius: 0; box-shadow: var(--shadow-dialog); }
+    .vs-modal-head { padding: var(--space-4) var(--space-5); }
+    .vs-modal-head h2 { font: 600 var(--text-title)/1.2 var(--font-ui); }
+    .vs-modal-head button { width: 24px; padding: 0; }
+    .vs-modal-body { padding: var(--space-4) var(--space-5) var(--space-5); }
+    .set-title { font: 600 var(--text-body)/1.2 var(--font-ui); color: var(--text-primary); text-transform: none; letter-spacing: 0; }
+    .set-help { font-size: var(--text-label); }
+    .set-row { padding: var(--space-3) 0; border-bottom-color: var(--border); }
+    .set-name { font-size: var(--text-label); font-weight: 500; }
+    .set-hint, .set-use { font-size: var(--text-micro); }
+    .switch { width: 32px; height: 16px; border-radius: var(--radius-pill); }
+    .switch::after { width: 12px; height: 12px; top: 1px; left: 1px; border-radius: 2px; transition: left var(--dur-fast) var(--ease-ui); }
+    .switch[aria-checked="true"]::after { left: 17px; }
+    .settings-btn { height: var(--control-h-lg); }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
     ::-webkit-scrollbar { width: 12px; height: 12px; }
     ::-webkit-scrollbar-track { background: var(--bg-panel); }
     ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
@@ -358,13 +535,13 @@
 <div class="container">
     <!-- HEADER -->
     <div class="header" id="header">
-        <h1><span>◆</span> VoltaSeq</h1>
+        <h1><svg class="logo" viewBox="0 0 10 10" aria-hidden="true"><rect x="2.2" y="2.2" width="5.6" height="5.6" transform="rotate(45 5 5)"/></svg>VoltaSeq</h1>
         <div class="header-right">
-            <button class="settings-btn" id="settingsBtn" aria-haspopup="dialog">⚙ Settings</button>
+            <button class="settings-btn" id="settingsBtn" aria-haspopup="dialog">Settings</button>
             <div class="midi-status" id="midiStatus">
                 <span class="midi-activity" id="midiActivity"></span>
                 <span class="status-dot" id="statusDot"></span>
-                <span id="statusText">WAITING FOR MIDI</span>
+                <span id="statusText">Waiting for MIDI</span>
             </div>
         </div>
     </div>
@@ -385,9 +562,9 @@
                     </div>
                 </div>
                 <div class="transport-btns">
-                    <button id="recBtn">● REC</button>
-                    <button id="playBtn">▶ PLAY</button>
-                    <button id="stopBtn">■ STOP</button>
+                    <button id="recBtn"><svg class="g" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4"/></svg>Rec</button>
+                    <button id="playBtn"><svg class="g" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 1l7 4-7 4z"/></svg>Play</button>
+                    <button id="stopBtn"><svg class="g" viewBox="0 0 10 10" aria-hidden="true"><rect x="1.5" y="1.5" width="7" height="7"/></svg>Stop</button>
                 </div>
                 <div class="toggle-row">
                     <input type="checkbox" id="precount">
@@ -412,13 +589,13 @@
                     </select>
                 </div>
                 <div style="font-size:9px; color:var(--text-secondary); line-height:1.5;">
-                    Arm <b style="color:var(--danger)">REC</b>, then <b style="color:var(--accent)">PLAY</b> (or <b>Space</b>). Notes record live into the active track, looped.
+                    Arm <b style="color:var(--danger)">Rec</b>, then <b style="color:var(--success)">Play</b> (or <b>Space</b>). Notes record live into the active track, looped.
                 </div>
             </div>
 
             <div class="section">
                 <div class="section-title">Tracks</div>
-                <div class="btn-row add-wrap"><button id="addTrack" aria-haspopup="true" aria-expanded="false">+ ADD TRACK</button>
+                <div class="btn-row add-wrap"><button id="addTrack" aria-haspopup="true" aria-expanded="false">Add Track</button>
                     <div class="add-menu" id="addMenu" hidden role="menu"></div></div>
                 <div class="tracks-list" id="tracksList"></div>
             </div>
@@ -471,21 +648,21 @@
                         <option value="0.5">1/8</option>
                         <option value="0.25" selected>1/16</option>
                     </select>
-                    <button id="transUp">▲</button>
-                    <button id="transDown">▼</button>
+                    <button id="transUp" title="Transpose up" aria-label="Transpose up"><svg class="g chev" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 6.5l3-3 3 3"/></svg></button>
+                    <button id="transDown" title="Transpose down" aria-label="Transpose down"><svg class="g chev" viewBox="0 0 10 10" aria-hidden="true"><path d="M2 3.5l3 3 3-3"/></svg></button>
                 </div>
                 <div class="tb-group" id="viewSwitch" hidden>
                     <span class="tb-label">View</span>
                     <div class="tool-select"><button class="tool-btn view-btn" data-v="notes" style="width:auto;padding:0 12px">Notes</button><button class="tool-btn view-btn" data-v="sound" style="width:auto;padding:0 12px">Sound</button></div>
                 </div>
                 <div class="tb-group">
-                    <button id="undoBtn" title="Undo (Ctrl+Z)" disabled>↶ Undo</button>
-                    <button id="redoBtn" title="Redo (Ctrl+Shift+Z)" disabled>↷ Redo</button>
+                    <button id="undoBtn" title="Undo (Ctrl+Z)" disabled>Undo</button>
+                    <button id="redoBtn" title="Redo (Ctrl+Shift+Z)" disabled>Redo</button>
                 </div>
                 <div style="flex:1"></div>
                 <div class="tb-group">
-                    <button id="saveBtn">💾 Save</button>
-                    <button id="loadBtn">📂 Load</button>
+                    <button id="saveBtn">Save</button>
+                    <button id="loadBtn">Load</button>
                     <button id="clearTrack" class="danger">Clear Track</button>
                 </div>
                 <input type="file" id="projectFile" accept=".zip" style="display:none">
@@ -508,17 +685,17 @@
 
             <!-- VELOCITY LANE -->
             <div class="velocity-lane" id="velLane">
-                <div class="vel-label">VEL</div>
+                <div class="vel-label">Vel</div>
                 <div class="vel-view" id="velView"><div class="vel-inner" id="velInner"></div></div>
             </div>
 
             <!-- MIDI MONITOR -->
             <div class="monitor collapsed" id="monitor">
                 <div class="monitor-head">
-                    <span class="monitor-title">◇ MIDI Monitor</span>
+                    <span class="monitor-title">MIDI Monitor</span>
                     <div style="display:flex; gap:6px;">
                         <button id="clearMon" class="mon-btn">Clear</button>
-                        <button id="monToggle" class="mon-btn">▴ Expand</button>
+                        <button id="monToggle" class="mon-btn">Expand</button>
                     </div>
                 </div>
                 <div class="monitor-log" id="monLog">
@@ -530,12 +707,12 @@
 
     <div class="status-bar">
         <div class="status-info">
-            <div>TRACK: <span class="status-val" id="stTrack">Track 1</span></div>
-            <div>NOTES: <span class="status-val" id="stNotes">0</span></div>
-            <div>SELECTED: <span class="status-val" id="stSel">0</span></div>
-            <div>LOOP: <span class="status-val" id="stLoop">4 bars</span></div>
+            <div>Track <span class="status-val" id="stTrack">Track 1</span></div>
+            <div>Notes <span class="status-val" id="stNotes">0</span></div>
+            <div>Selected <span class="status-val" id="stSel">0</span></div>
+            <div>Loop <span class="status-val" id="stLoop">4 bars</span></div>
         </div>
-        <div style="font-size:9px;">VoltaSeq v2.3 · WebMIDI + WebAudio · instrument tracks</div>
+        <div style="font-size:9px;">VoltaSeq v2.5 · WebMIDI + WebAudio · instrument tracks</div>
     </div>
 </div>
 
@@ -543,10 +720,10 @@
 <div class="vs-toast" id="vsToast" role="status"></div>
 <div class="vs-modal" id="settingsModal" hidden>
     <div class="vs-modal-card" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
-        <div class="vs-modal-head"><h2 id="settingsTitle">Settings</h2><button id="settingsClose" aria-label="Close settings">✕</button></div>
+        <div class="vs-modal-head"><h2 id="settingsTitle">Settings</h2><button id="settingsClose" aria-label="Close settings"><svg class="g chev" viewBox="0 0 10 10" aria-hidden="true"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5"/></svg></button></div>
         <div class="vs-modal-body">
             <div class="set-title">Instruments</div>
-            <div class="set-help">Choose which instruments appear under + ADD TRACK. Turning one off only hides it from the menu: tracks and projects that already use it keep working.</div>
+            <div class="set-help">Choose which instruments appear under Add Track. Turning one off only hides it from the menu: tracks and projects that already use it keep working.</div>
             <div id="settingsInst"></div>
         </div>
     </div>
@@ -564,7 +741,6 @@ const PICO8 = ['#1D2B53','#7E2553','#008751','#AB5236','#5F574F','#C2C3C7','#FFF
                '#FF004D','#FFA300','#FFEC27','#00E436','#29ADFF','#83769C','#FF77A8','#FFCCAA'];
 const NOTE_NAMES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
 const noteName = n => NOTE_NAMES[n % 12] + (Math.floor(n / 12) - 1);
-const escHtml = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
 
 // ── INSTRUMENTS ────────────────────────────────────────────────────────
 // Each track belongs to an instrument. "midi" is built in; the others are
@@ -575,6 +751,7 @@ const INSTRUMENT_CATALOG = [
     { id: 'volca', name: 'KORG volca sample 2', hint: '10-part drum grid, part sounds, sample manager', file: 'instruments/volca.js' },
     { id: 'craft', name: 'Modal CRAFTsynth 2.0', hint: 'Piano roll plus full sound editor and patch library', file: 'instruments/craft.js' },
     { id: 'microfreak', name: 'Arturia MicroFreak', hint: 'Piano roll plus sound editor and preset recall', file: 'instruments/microfreak.js' },
+    { id: 'sidstation', name: 'Elektron SidStation', hint: 'Piano roll plus live sound editor, wavetables and patch dumps', file: 'instruments/sidstation.js' },
 ];
 window.VoltaInstruments = window.VoltaInstruments || {};
 VoltaInstruments.midi = { id: 'midi', name: 'MIDI (generic)', short: 'MIDI', editor: 'roll', hideChannel: false };
@@ -656,7 +833,7 @@ class Seq {
         if (this.hasDevice(trk)) {
             const ch = trk.channel & 0x0F;
             this.sendOut(trk, [0x90 | ch, note, velocity]);
-            this.seqEcho.set(note + '-' + ch, performance.now() + durSec * 1000 + 120);
+            this.seqEcho.set(note, performance.now() + durSec * 1000 + 120);
             setTimeout(() => this.sendOut(trk, [0x80 | ch, note, 0]), durSec * 1000);
         } else this.synth(note, velocity, durSec);
     }
@@ -766,7 +943,7 @@ class Seq {
         if (!(this.playing && this.armed)) return;   // record only while playing + armed
 
         // echo suppression: never record what the sequencer itself just played out
-        const echoExp = this.seqEcho.get(d1 + '-' + ch);
+        const echoExp = this.seqEcho.get(d1);
         if (echoExp && performance.now() <= echoExp) return;
 
         const beat = this.currentBeat();
@@ -892,8 +1069,7 @@ class Seq {
     }
     play() {
         if (this.playing || this.precounting) return;
-        if (!this.audio) { this.toast('No audio engine — transport needs WebAudio'); return; }
-        if (this.audio.state === 'suspended') this.audio.resume();
+        if (this.audio && this.audio.state === 'suspended') this.audio.resume();
         document.getElementById('playBtn').classList.add('playing');
         if (this.armed && this.precount) this.startPrecount();
         else this.startTransport();
@@ -920,7 +1096,7 @@ class Seq {
     startTransport() {
         this.playing = true;
         this.startTime = this.audio.currentTime;
-        this.lastBeat = -1;             // -1 so notes exactly on beat 0 fire on the first pass
+        this.lastBeat = 0;
         this.lastMetroBeat = -1;
         document.getElementById('playhead').classList.add('active');
         this.updateRecVisual();
@@ -953,7 +1129,7 @@ class Seq {
         btn.classList.toggle('armed', this.armed && !this.playing);
         btn.classList.toggle('recording', this.armed && this.playing);
         hdr.classList.toggle('recording', this.armed && this.playing);
-        btn.textContent = (this.armed && this.playing) ? '● REC' : (this.armed ? '● ARMED' : '● REC');
+        btn.innerHTML = '<svg class="g" viewBox="0 0 10 10" aria-hidden="true"><circle cx="5" cy="5" r="4"/></svg>' + ((this.armed && !this.playing) ? 'Armed' : 'Rec');
     }
 
     animate() {
@@ -1011,7 +1187,7 @@ class Seq {
         if (trk.outputId) {
             const ch = (n.ch != null ? n.ch : trk.channel) & 0x0F;
             this.sendOut(trk, [0x90 | ch, n.note, n.velocity]);
-            this.seqEcho.set(n.note + '-' + ch, performance.now() + durSec * 1000 + 120);
+            this.seqEcho.set(n.note, performance.now() + durSec * 1000 + 120);
             setTimeout(() => this.sendOut(trk, [0x80 | ch, n.note, 0]), durSec * 1000);
         }
     }
@@ -1126,7 +1302,7 @@ class Seq {
             item.className = 'track-item' + (trk.id === this.activeId ? ' active' : '');
             item.innerHTML =
                 `<div class="track-color" style="background:${trk.color}"></div>` +
-                `<div class="track-meta"><div class="track-name">${escHtml(trk.name)}<span class="inst-badge">${escHtml(this.prof(trk).short)}</span></div>` +
+                `<div class="track-meta"><div class="track-name">${trk.name}<span class="inst-badge">${this.prof(trk).short}</span></div>` +
                 `<div class="track-info">${this.prof(trk).trackInfo ? this.prof(trk).trackInfo(trk, this) : trk.notes.length + ' notes · ch' + (trk.channel + 1)}</div></div>` +
                 `<button class="track-mute ${trk.muted ? 'muted' : ''}">M</button>`;
             item.addEventListener('click', e => {
@@ -1475,7 +1651,6 @@ class Seq {
             if (!this.tracks.length) this.tracks = [this.newTrack(1)];
             this.activeId = (data.activeId && this.tracks.some(t => t.id === data.activeId)) ? data.activeId : this.tracks[0].id;
             this.selected.clear();
-            this.undoStack = []; this.redoStack = []; this.updateUndoButtons();   // fresh project: drop the old history
 
             // sync UI controls
             document.getElementById('bpm').value = this.bpm;
@@ -1546,8 +1721,8 @@ class Seq {
         const txt = document.getElementById('statusText');
         box.classList.toggle('connected', ok);
         dot.classList.toggle('connected', ok);
-        if (ok) txt.textContent = `READY · ${this.inputs.size} IN · ${this.outputs.size} OUT`;
-        else txt.textContent = msg || 'NO MIDI';
+        if (ok) txt.textContent = `Ready · ${this.inputs.size} in · ${this.outputs.size} out`;
+        else txt.textContent = msg || 'No MIDI';
     }
     updateStatus() {
         const trk = this.active;
@@ -1592,7 +1767,7 @@ class Seq {
             const m = document.getElementById('monitor');
             m.classList.toggle('expanded', this.monExpanded);
             m.classList.toggle('collapsed', !this.monExpanded);
-            document.getElementById('monToggle').textContent = this.monExpanded ? '▾ Collapse' : '▴ Expand';
+            document.getElementById('monToggle').textContent = this.monExpanded ? 'Collapse' : 'Expand';
             this.renderMonitor();
         };
         document.getElementById('clearTrack').onclick = () => {

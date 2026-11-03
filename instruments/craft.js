@@ -226,7 +226,7 @@
     create(trk) { trk.name = 'CRAFTsynth'; trk.view = 'sound'; trk.inst = { params: {}, program: 0, name: '' }; },
     trackInfo: trk => `${trk.notes.length} notes · ch${trk.channel + 1}`,
     mount(host, trk, seq) { ui.host = host; mount(host, trk, seq); },
-    unmount() { ui.host = null; if (unMidi) { unMidi(); unMidi = null; } },
+    unmount() { ui.host = null; },
     refresh(trk, seq) { cur.trk = trk; cur.seq = seq; render(); },
     _test: { SECTIONS, BY, fmt }
   };
